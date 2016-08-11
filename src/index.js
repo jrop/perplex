@@ -19,9 +19,6 @@ class Token {
 	position() {
 		const start = this.lexer.position(this.start)
 		const end = this.lexer.position(this.end)
-
-		++start.column
-		++end.column
 		return { start, end }
 	}
 }
@@ -65,6 +62,16 @@ function lexer(s) {
 	}
 
 	//
+	// expect
+	//
+	lex.expect = function lexerExpect(type) {
+		const t = lex.next()
+		if (t.type != type)
+			throw new Error('Expected ' + type + (t ? ', got ' + t.type : ''))
+		return t
+	}
+
+	//
 	// peek
 	//
 	lex.peek = function lexerPeek(position) {
@@ -85,7 +92,7 @@ function lexer(s) {
 				if (match) {
 					const start = position
 					const end = position + match.length
-					t = new Token(tokenType.type, match, start, end, lex, tokenType.extra || defaultExtra)
+					t = new Token(tokenType.type, match, start, end, lex, Object.assign({ }, defaultExtra, tokenType.extra))
 					position = end
 					break // break out of for
 				}
@@ -103,7 +110,8 @@ function lexer(s) {
 			} catch (e) {
 				unexpected += e.unexpected
 			}
-			const e = new Error(`Unexpected token: ${unexpected}`)
+			const { line, column } = lex.position(position)
+			const e = new Error(`Unexpected token: ${unexpected} at (${line}:${column})`)
 			e.unexpected = unexpected
 			e.end = position + unexpected.length
 			throw e
@@ -121,7 +129,7 @@ function lexer(s) {
 			lines = [ lines ]
 
 		const line = lines.length
-		const column = lines[lines.length - 1].length
+		const column = lines[lines.length - 1].length + 1
 		return { line, column }
 	}
 
@@ -144,6 +152,7 @@ function lexer(s) {
 		s = str
 		pos = 0
 		inserted.splice(0, inserted.length)
+		return lex
 	}
 
 	//
