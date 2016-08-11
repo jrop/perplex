@@ -94,17 +94,20 @@ lexer.next() // { type: '$EOF', ... }
 
 ## `Token` Instances
 
-Tokens support the following properties:
+Tokens support the following properties/methods:
 
 * `type`
 * `match`
 * `start` - `-1` for transient tokens
 * `end` - `-1` for transient tokens
 * any other properties defined by `extra`
-
-# Wishlist
-
-* `Token.error` method that also reports line/column information (should not be hard to implement).
+* position() - returns an object of the form (line and column are both 1-based):
+```js
+{
+	start: { line: ..., column: ... },
+	end: { line: ..., column: ... },
+}
+```
 
 # License
 

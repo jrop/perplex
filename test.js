@@ -1,15 +1,16 @@
 'use strict'
 
 const assert = require('assert')
+const except = require('except')
 const lexer = require('./lib/index')
 
-describe('lexer', function () {
+const lex = lexer()
+	.extra({ extra: true })
+	.token('NUMBER', /\d+/)
+	.token('$SKIP_SINGLE_LINE_COMMENT', /\/\/[^\n]*/)
+	.token('$SKIP_WHITESPACE', /^\s+/)
 
-	const lex = lexer()
-		.extra({ extra: true })
-		.token('NUMBER', /\d+/)
-		.token('$SKIP_SINGLE_LINE_COMMENT', /\/\/[^\n]*/)
-		.token('$SKIP_WHITESPACE', /^\s+/)
+describe('lexer', function () {
 
 	beforeEach(function () {
 		lex.source('  4 5 6  ')
@@ -39,7 +40,7 @@ describe('lexer', function () {
 
 	it('.insert()', function () {
 		lex.insert({ type: 'MY_TRANSIENT' })
-		assert.deepEqual(lex.next(), {
+		assert.deepEqual(except(lex.next(), 'lexer'), {
 			type: 'MY_TRANSIENT',
 			match: '',
 			start: -1,
@@ -47,10 +48,10 @@ describe('lexer', function () {
 			transient: true,
 			extra: true,
 		})
-		assert.deepEqual(lex.next(), FOUR)
+		assert.deepEqual(except(lex.next(), 'lexer'), FOUR)
 
 		lex.insert({ type: 'MY_TRANSIENT' })
-		assert.deepEqual(lex.next(), {
+		assert.deepEqual(except(lex.next(), 'lexer'), {
 			type: 'MY_TRANSIENT',
 			match: '',
 			start: -1,
@@ -59,22 +60,22 @@ describe('lexer', function () {
 			extra: true,
 		})
 
-		assert.deepEqual(lex.next(), FIVE)
+		assert.deepEqual(except(lex.next(), 'lexer'), FIVE)
 	})
 
 	it('.peek()', function () {
-		assert.deepEqual(lex.peek(), FOUR)
+		assert.deepEqual(except(lex.peek(), 'lexer'), FOUR)
 
 		lex.next()
-		assert.deepEqual(lex.peek(), FIVE)
-		assert.deepEqual(lex.peek(), FIVE)
+		assert.deepEqual(except(lex.peek(), 'lexer'), FIVE)
+		assert.deepEqual(except(lex.peek(), 'lexer'), FIVE)
 	})
 
 	it('.next()', function () {
-		assert.deepEqual(lex.next(), FOUR)
-		assert.deepEqual(lex.next(), FIVE)
-		assert.deepEqual(lex.next(), SIX)
-		assert.deepEqual(lex.next(), {
+		assert.deepEqual(except(lex.next(), 'lexer'), FOUR)
+		assert.deepEqual(except(lex.next(), 'lexer'), FIVE)
+		assert.deepEqual(except(lex.next(), 'lexer'), SIX)
+		assert.deepEqual(except(lex.next(), 'lexer'), {
 			type: '$EOF',
 			match: '',
 			start: 9,
@@ -97,5 +98,37 @@ describe('lexer', function () {
 			lex.next()
 		}, /asdf/)
 		assert.equal(lex.next().match, '5')
+	})
+})
+
+describe('Token', function () {
+	it('.position()', function () {
+		lex.source(`4
+5 6
+7`)
+
+		const _4 = lex.next()
+		assert.deepEqual(_4.position(), {
+			start: { line: 1, column: 1 },
+			end: { line: 1, column: 2 },
+		})
+
+		const _5 = lex.next()
+		assert.deepEqual(_5.position(), {
+			start: { line: 2, column: 1 },
+			end: { line: 2, column: 2 },
+		})
+
+		const _6 = lex.next()
+		assert.deepEqual(_6.position(), {
+			start: { line: 2, column: 3 },
+			end: { line: 2, column: 4 },
+		})
+
+		const _7 = lex.next()
+		assert.deepEqual(_7.position(), {
+			start: { line: 3, column: 1 },
+			end: { line: 3, column: 2 },
+		})
 	})
 })

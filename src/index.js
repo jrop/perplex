@@ -1,11 +1,12 @@
 'use strict'
 
 class Token {
-	constructor(type, match, start, end, extra) {
+	constructor(type, match, start, end, lexer, extra) {
 		this.type = type
 		this.match = match
 		this.start = start
 		this.end = end
+		this.lexer = lexer
 
 		for (const key in extra) {
 			if (typeof extra[key] == 'function')
@@ -13,6 +14,15 @@ class Token {
 			else
 				this[key] = extra[key]
 		}
+	}
+
+	position() {
+		const start = this.lexer.position(this.start)
+		const end = this.lexer.position(this.end)
+
+		++start.column
+		++end.column
+		return { start, end }
 	}
 }
 
@@ -65,7 +75,7 @@ function lexer(s) {
 			return Object.assign(inserted.pop())
 
 		if (position >= s.length)
-			return new Token('$EOF', '', position, position, defaultExtra)
+			return new Token('$EOF', '', position, position, lex, defaultExtra)
 
 		let t
 		do {
@@ -75,7 +85,7 @@ function lexer(s) {
 				if (match) {
 					const start = position
 					const end = position + match.length
-					t = new Token(tokenType.type, match, start, end, tokenType.extra || defaultExtra)
+					t = new Token(tokenType.type, match, start, end, lex, tokenType.extra || defaultExtra)
 					position = end
 					break // break out of for
 				}
@@ -83,7 +93,7 @@ function lexer(s) {
 		} while (t && t.type.startsWith('$SKIP'))
 
 		if (!t && position >= s.length)
-			return new Token('$EOF', '', position, position, defaultExtra)
+			return new Token('$EOF', '', position, position, lex, defaultExtra)
 
 		// did we find a match?
 		if (!t) {
@@ -103,12 +113,25 @@ function lexer(s) {
 	}
 
 	//
+	// position
+	//
+	lex.position = function lexPosition(i) {
+		let lines = s.substring(0, i).split(/\r\n|\r|\n/)
+		if (!Array.isArray(lines))
+			lines = [ lines ]
+
+		const line = lines.length
+		const column = lines[lines.length - 1].length
+		return { line, column }
+	}
+
+	//
 	// insert
 	//
 	lex.insert = function lexerInsert(token) {
 		if (!(token instanceof Token)) {
 			const extra = Object.assign({ }, defaultExtra, token)
-			token = new Token('$TRANSIENT', '', -1, -1, extra)
+			token = new Token('$TRANSIENT', '', -1, -1, lex, extra)
 		}
 		token.transient = true
 		inserted.push(token)
