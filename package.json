@@ -1,0 +1,22 @@
+{
+  "name": "perplex",
+  "version": "0.0.1",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "mkdir -p lib/ && babel src/index.js > lib/index.js",
+    "clean": "rm -rf lib/",
+    "coverage": "istanbul cover _mocha test.js",
+    "prepublish": "npm test",
+    "test": "npm run build && mocha test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-cli": "^6.11.4",
+    "babel-preset-es2015": "^6.13.2",
+    "mocha": "^3.0.2"
+  }
+}
