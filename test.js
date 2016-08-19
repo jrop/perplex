@@ -19,6 +19,7 @@ describe('lexer', function () {
 	const FOUR = {
 		type: 'NUMBER',
 		match: '4',
+		groups: [ '4' ],
 		start: 2,
 		end: 3,
 		extra: true,
@@ -26,6 +27,7 @@ describe('lexer', function () {
 	const FIVE = {
 		type: 'NUMBER',
 		match: '5',
+		groups: [ '5' ],
 		start: 4,
 		end: 5,
 		extra: true,
@@ -33,6 +35,7 @@ describe('lexer', function () {
 	const SIX = {
 		type: 'NUMBER',
 		match: '6',
+		groups: [ '6' ],
 		start: 6,
 		end: 7,
 		extra: true,
@@ -43,6 +46,7 @@ describe('lexer', function () {
 		assert.deepEqual(except(lex.next(), 'lexer'), {
 			type: 'MY_TRANSIENT',
 			match: '',
+			groups: [],
 			start: -1,
 			end: -1,
 			transient: true,
@@ -54,6 +58,7 @@ describe('lexer', function () {
 		assert.deepEqual(except(lex.next(), 'lexer'), {
 			type: 'MY_TRANSIENT',
 			match: '',
+			groups: [],
 			start: -1,
 			end: -1,
 			transient: true,
@@ -77,7 +82,8 @@ describe('lexer', function () {
 		assert.deepEqual(except(lex.next(), 'lexer'), SIX)
 		assert.deepEqual(except(lex.next(), 'lexer'), {
 			type: '$EOF',
-			match: '',
+			match: '(eof)',
+			groups: [],
 			start: 9,
 			end: 9,
 			extra: true,

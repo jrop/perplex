@@ -1,9 +1,10 @@
 'use strict'
 
 class Token {
-	constructor(type, match, start, end, lexer, extra) {
+	constructor(type, match, groups, start, end, lexer, extra) {
 		this.type = type
 		this.match = match
+		this.groups = groups
 		this.start = start
 		this.end = end
 		this.lexer = lexer
@@ -39,8 +40,12 @@ function lexer(s) {
 	function peekRegex(r, position) {
 		position = position || pos
 		r.lastMatch = 0
-		const m = r.exec(s.substring(position))
-		return m ? m[0] : null
+
+		let groups = r.exec(s.substring(position))
+		if (groups) groups = groups.map(x => x) // only keep array elements (remove "index" and "input")
+
+		const match = groups ? groups[0] : null
+		return { match, groups }
 	}
 
 	const lex = { }
@@ -66,8 +71,10 @@ function lexer(s) {
 	//
 	lex.expect = function lexerExpect(type) {
 		const t = lex.next()
-		if (t.type != type)
-			throw new Error('Expected ' + type + (t ? ', got ' + t.type : ''))
+		if (t.type != type) {
+			const pos = t.position()
+			throw new Error('Expected ' + type + (t ? ', got ' + t.type : '') + ' at ' + pos.start.line + ':' + pos.start.column)
+		}
 		return t
 	}
 
@@ -88,11 +95,11 @@ function lexer(s) {
 		do {
 			t = null
 			for (var tokenType of tokenTypes) {
-				const match = peekRegex(tokenType.regex, position)
+				const { match, groups } = peekRegex(tokenType.regex, position)
 				if (match) {
 					const start = position
 					const end = position + match.length
-					t = new Token(tokenType.type, match, start, end, lex, Object.assign({ }, defaultExtra, tokenType.extra))
+					t = new Token(tokenType.type, match, groups, start, end, lex, Object.assign({ }, defaultExtra, tokenType.extra))
 					position = end
 					break // break out of for
 				}
@@ -100,7 +107,7 @@ function lexer(s) {
 		} while (t && t.type.startsWith('$SKIP'))
 
 		if (!t && position >= s.length)
-			return new Token('$EOF', '', position, position, lex, defaultExtra)
+			return new Token('$EOF', '(eof)', [], position, position, lex, defaultExtra)
 
 		// did we find a match?
 		if (!t) {
@@ -139,7 +146,7 @@ function lexer(s) {
 	lex.insert = function lexerInsert(token) {
 		if (!(token instanceof Token)) {
 			const extra = Object.assign({ }, defaultExtra, token)
-			token = new Token('$TRANSIENT', '', -1, -1, lex, extra)
+			token = new Token('$TRANSIENT', '', [], -1, -1, lex, extra)
 		}
 		token.transient = true
 		inserted.push(token)
