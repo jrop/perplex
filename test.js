@@ -90,6 +90,11 @@ describe('lexer', function () {
 		})
 	})
 
+	it('.remaining()', function () {
+		lex.next() // 4
+		assert.equal(lex.remaining().trim(), '5 6')
+	})
+
 	it('unexpected input', function () {
 		lex.source('4 asdf')
 		assert.equal(lex.next().match, '4')

@@ -92,6 +92,10 @@ lexer.next() // { type: 'dummy', ... }
 lexer.next() // { type: '$EOF', ... }
 ```
 
+### lexer.remaining()
+
+Returns the string of remaining text yet untokenized.
+
 ## `Token` Instances
 
 Tokens support the following properties/methods:

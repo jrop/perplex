@@ -163,6 +163,13 @@ function lexer(s) {
 	}
 
 	//
+	// remaining
+	//
+	lex.remaining = function lexerRemaining() {
+		return s.substring(pos)
+	}
+
+	//
 	// attach chaining functions to `lex`
 	//
 	lex.extra = function lexerExtra(extra) {

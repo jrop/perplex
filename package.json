@@ -1,6 +1,6 @@
 {
   "name": "perplex",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
@@ -20,6 +20,7 @@
     "except": "^0.1.3",
     "mocha": "^3.0.2"
   },
+  "repository": "https://github.com/jrop/perplex",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   }
