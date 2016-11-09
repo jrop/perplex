@@ -11,6 +11,8 @@ npm install --save perplex
 
 ## Use
 
+*NOTE: version 0.4.0 changed .position() to .strpos() and introduced a .position property. Since this package is pre-1.0, it does not break SemVer, but be aware that this change has taken place.*
+
 An example explains the use best:
 
 ```js
@@ -62,7 +64,7 @@ lexer.next() // { type: 'NUMBER', match: '101', ..., myProperty: 42, myFunction:
 
 ### lexer.source(string)
 
-Initializes the lexer to operate on the given string
+Initializes the lexer to operate on the given string.  If this method is called with no arguments, it returns the source string that the lexer is operating on.
 
 ### lexer.peek()
 
@@ -95,6 +97,21 @@ lexer.next() // { type: '$EOF', ... }
 ### lexer.remaining()
 
 Returns the string of remaining text yet untokenized.
+
+### lexer.strpos(index)
+
+Translates `index` from an index within the source-string to row/column information:
+
+```js
+{
+	line: ..., // 1-based
+	column: ..., // 1-based
+}
+```
+
+### lexer.position (getter/setter)
+
+Allows for scrubbing forward/backward within the source string.
 
 ## `Token` Instances
 

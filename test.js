@@ -90,9 +90,30 @@ describe('lexer', function () {
 		})
 	})
 
+	it('.expect()', function () {
+		assert(lex.expect('NUMBER').match.trim(), '4')
+		assert.throws(() => lex.expect('NOPE'))
+	})
+
 	it('.remaining()', function () {
 		lex.next() // 4
 		assert.equal(lex.remaining().trim(), '5 6')
+	})
+
+	it('.source()', function () {
+		lex.next() // 4
+		assert.equal(lex.source().replace(/\s+/g, ''), '456')
+	})
+
+	it('.position (get)', function () {
+		lex.next() // 4
+		assert.equal(lex.position, 3)
+	})
+
+	it('.position (set)', function () {
+		lex.next() // 4
+		lex.position = 0
+		assert.equal(lex.next().match.trim(), '4')
 	})
 
 	it('unexpected input', function () {
@@ -113,31 +134,31 @@ describe('lexer', function () {
 })
 
 describe('Token', function () {
-	it('.position()', function () {
+	it('.strpos()', function () {
 		lex.source(`4
 5 6
 7`)
 
 		const _4 = lex.next()
-		assert.deepEqual(_4.position(), {
+		assert.deepEqual(_4.strpos(), {
 			start: { line: 1, column: 1 },
 			end: { line: 1, column: 2 },
 		})
 
 		const _5 = lex.next()
-		assert.deepEqual(_5.position(), {
+		assert.deepEqual(_5.strpos(), {
 			start: { line: 2, column: 1 },
 			end: { line: 2, column: 2 },
 		})
 
 		const _6 = lex.next()
-		assert.deepEqual(_6.position(), {
+		assert.deepEqual(_6.strpos(), {
 			start: { line: 2, column: 3 },
 			end: { line: 2, column: 4 },
 		})
 
 		const _7 = lex.next()
-		assert.deepEqual(_7.position(), {
+		assert.deepEqual(_7.strpos(), {
 			start: { line: 3, column: 1 },
 			end: { line: 3, column: 2 },
 		})

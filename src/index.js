@@ -17,9 +17,9 @@ class Token {
 		}
 	}
 
-	position() {
-		const start = this.lexer.position(this.start)
-		const end = this.lexer.position(this.end)
+	strpos() {
+		const start = this.lexer.strpos(this.start)
+		const end = this.lexer.strpos(this.end)
 		return { start, end }
 	}
 }
@@ -72,7 +72,7 @@ function lexer(s) {
 	lex.expect = function lexerExpect(type) {
 		const t = lex.next()
 		if (t.type != type) {
-			const pos = t.position()
+			const pos = t.strpos()
 			throw new Error('Expected ' + type + (t ? ', got ' + t.type : '') + ' at ' + pos.start.line + ':' + pos.start.column)
 		}
 		return t
@@ -117,7 +117,7 @@ function lexer(s) {
 			} catch (e) {
 				unexpected += e.unexpected
 			}
-			const { line, column } = lex.position(position)
+			const { line, column } = lex.strpos(position)
 			const e = new Error(`Unexpected token: ${unexpected} at (${line}:${column})`)
 			e.unexpected = unexpected
 			e.end = position + unexpected.length
@@ -128,9 +128,9 @@ function lexer(s) {
 	}
 
 	//
-	// position
+	// strpos
 	//
-	lex.position = function lexPosition(i) {
+	lex.strpos = function lexStrpos(i) {
 		let lines = s.substring(0, i).split(/\r\n|\r|\n/)
 		if (!Array.isArray(lines))
 			lines = [ lines ]
@@ -156,6 +156,8 @@ function lexer(s) {
 	// source
 	//
 	lex.source = function lexerString(str) {
+		if (typeof str == 'undefined')
+			return s
 		s = str
 		pos = 0
 		inserted.splice(0, inserted.length)
@@ -168,6 +170,14 @@ function lexer(s) {
 	lex.remaining = function lexerRemaining() {
 		return s.substring(pos)
 	}
+
+	//
+	// pos property
+	//
+	Object.defineProperty(lex, 'position', {
+		get: () => pos,
+		set: p => pos = p,
+	})
 
 	//
 	// attach chaining functions to `lex`
