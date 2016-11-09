@@ -62,10 +62,6 @@ const lexer = perplex()
 lexer.next() // { type: 'NUMBER', match: '101', ..., myProperty: 42, myFunction: ... }
 ```
 
-### lexer.source(string)
-
-Initializes the lexer to operate on the given string.  If this method is called with no arguments, it returns the source string that the lexer is operating on.
-
 ### lexer.peek()
 
 Like `next()`, but does not consume the token.
@@ -108,6 +104,10 @@ Translates `index` from an index within the source-string to row/column informat
 	column: ..., // 1-based
 }
 ```
+
+### lexer.source (getter/setter)
+
+Gets or sets the source string that the lexer is operating on.
 
 ### lexer.position (getter/setter)
 

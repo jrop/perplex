@@ -13,7 +13,7 @@ const lex = lexer()
 describe('lexer', function () {
 
 	beforeEach(function () {
-		lex.source('  4 5 6  ')
+		lex.source = '  4 5 6  '
 	})
 
 	const FOUR = {
@@ -100,9 +100,9 @@ describe('lexer', function () {
 		assert.equal(lex.remaining().trim(), '5 6')
 	})
 
-	it('.source()', function () {
+	it('.source (get)', function () {
 		lex.next() // 4
-		assert.equal(lex.source().replace(/\s+/g, ''), '456')
+		assert.equal(lex.source.replace(/\s+/g, ''), '456')
 	})
 
 	it('.position (get)', function () {
@@ -117,14 +117,14 @@ describe('lexer', function () {
 	})
 
 	it('unexpected input', function () {
-		lex.source('4 asdf')
+		lex.source = '4 asdf'
 		assert.equal(lex.next().match, '4')
 		assert.throws(function () {
 			lex.next()
 		}, /asdf/)
 
 		// recover?
-		lex.source('4 asdf 5')
+		lex.source = '4 asdf 5'
 		assert.equal(lex.next().match, '4')
 		assert.throws(function () {
 			lex.next()
@@ -135,9 +135,9 @@ describe('lexer', function () {
 
 describe('Token', function () {
 	it('.strpos()', function () {
-		lex.source(`4
+		lex.source = `4
 5 6
-7`)
+7`
 
 		const _4 = lex.next()
 		assert.deepEqual(_4.strpos(), {

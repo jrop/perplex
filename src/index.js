@@ -155,14 +155,14 @@ function lexer(s) {
 	//
 	// source
 	//
-	lex.source = function lexerString(str) {
-		if (typeof str == 'undefined')
-			return s
-		s = str
-		pos = 0
-		inserted.splice(0, inserted.length)
-		return lex
-	}
+	Object.defineProperty(lex, 'source', {
+		get: () => s,
+		set: str => {
+			s = str
+			pos = 0
+			inserted.splice(0, inserted.length)
+		}
+	})
 
 	//
 	// remaining
