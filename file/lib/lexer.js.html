@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">lib/lexer.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/jrop/perplex" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/token.js~Token.html">Token</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-Position">Position</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-TokenPosition">TokenPosition</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">lib/lexer.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import Token from &apos;./token&apos;;
+function normalize(regex) {
+    if (!regex.source.startsWith(&apos;^&apos;))
+        return new RegExp(`^${regex.source}`, regex.flags);
+    else
+        return regex;
+}
+/**
+ * @typedef {{
+ *   line: number,
+ *   column: number,
+ * }} Position
+ */
+/**
+ * Lexes a source-string into tokens.
+ *
+ * @example
+ * const lex = perplex(&apos;...&apos;)
+ *   .token(&apos;ID&apos;, /my-id-regex/)
+ *   .token(&apos;(&apos;, /\(/)
+ *   .token(&apos;)&apos;, /\)/)
+ *   .token(&apos;$SKIP_WS&apos;, /\s+/)
+ *
+ * while ((let t = lex.next()).type != &apos;$EOF&apos;) {
+ *   console.log(t)
+ * }
+ */
+class Lexer {
+    /* tslint:enable */
+    /**
+     * Creates a new Lexer instance
+     * @param {string} source The source string to operate on.
+     */
+    constructor(source) {
+        this._source = source;
+        this._position = 0;
+        this._tokenTypes = [];
+        this._inserted = [];
+        this._defaultExtra = null;
+    }
+    _peekRegex(r, position) {
+        r.lastMatch = 0;
+        let groups = r.exec(this._source.substring(position));
+        if (groups)
+            groups = groups.map(x =&gt; x); // only keep array elements (remove &quot;index&quot; and &quot;input&quot;)
+        const match = groups ? groups[0] : null;
+        return { match, groups };
+    }
+    /**
+     * Gets the source being lexed
+     * @type {string}
+     */
+    get source() {
+        return this._source;
+    }
+    /**
+     * Sets the source being lexed
+     * @type {string}
+     */
+    set source(s) {
+        this._source = s;
+        this.position = 0;
+        this._inserted.splice(0, this._inserted.length);
+    }
+    /**
+     * Returns the lexer&apos;s position in the source string
+     * @type {number}
+     */
+    get position() {
+        return this._position;
+    }
+    /**
+     * Sets the lexer&apos;s position in the source string
+     * @type {number}
+     */
+    set position(pos) {
+        this._position = pos;
+    }
+    /**
+     * Like {@link next}, but throws an exception if the next token is
+     * not of the required type.
+     * @param {string} type The token type expected from {@link next}
+     * @return {Token} Returns the {@link Token} on success
+     */
+    expect(type) {
+        const t = this.next();
+        if (t.type != type) {
+            const pos = t.strpos();
+            throw new Error(&apos;Expected &apos; + type + (t ? &apos;, got &apos; + t.type : &apos;&apos;) + &apos; at &apos; + pos.start.line + &apos;:&apos; + pos.start.column);
+        }
+        return t;
+    }
+    /**
+     * Extends Token instances generically.
+     * @param {any} extra The object to be `Object.assign(...)`&apos;d to tokens in general.
+     * @return {Lexer} Returns the Lexer instance.
+     * @example
+     * const lex = perplex(s)
+     *   .extra({
+     *     myMethod() {
+     *       console.log(&apos;My custom method&apos;)
+     *     }
+     *   })
+     * lex.next().myMethod() // prints &apos;My custom method&apos;
+     */
+    extra(extra) {
+        this._defaultExtra = extra;
+        return this;
+    }
+    /**
+     * Inserts a transient token into the token stream that will be returned
+     * the next time {@link next} is called.
+     * @param {Token|any} token The token to insert.
+     */
+    insert(token) {
+        if (!(token instanceof Token)) {
+            const extra = Object.assign({}, this._defaultExtra, token);
+            token = new Token(&apos;$TRANSIENT&apos;, &apos;&apos;, [], -1, -1, this, extra);
+        }
+        token.transient = true;
+        this._inserted.push(token);
+    }
+    /**
+     * Consumes and returns the next {@link Token} in the source string.
+     * If there are no more tokens, it returns a {@link Token} of type `$EOF`
+     * @return {Token}
+     */
+    next() {
+        try {
+            const t = this.peek();
+            if (t &amp;&amp; !t.transient)
+                this.position = t.end;
+            this._current = t;
+            return t;
+        }
+        catch (e) {
+            this._position = e.end;
+            throw e;
+        }
+    }
+    /**
+     * Returns the next {@link Token} in the source string, but does
+     * not consume it.
+     * If there are no more tokens, it returns a {@link Token} of type `$EOF`
+     * @param {number} [position=`this.position`] The position at which to start reading
+     * @return {Token}
+     */
+    peek(position = this.position) {
+        // first check if we have any feaux tokens to deliver:
+        if (this._inserted.length &gt; 0)
+            return Object.assign(this._inserted.pop());
+        if (position &gt;= this._source.length)
+            return new Token(&apos;$EOF&apos;, &apos;&apos;, [], position, position, this, this._defaultExtra);
+        let t;
+        do {
+            t = null;
+            for (const tokenType of this._tokenTypes) {
+                const { match, groups } = this._peekRegex(tokenType.regex, position);
+                if (match) {
+                    const start = position;
+                    const end = position + match.length;
+                    t = new Token(tokenType.type, match, groups, start, end, this, Object.assign({}, this._defaultExtra, tokenType.extra));
+                    position = end;
+                    break; // break out of for
+                }
+            }
+        } while (t &amp;&amp; t.type.startsWith(&apos;$SKIP&apos;));
+        if (!t &amp;&amp; position &gt;= this._source.length)
+            return new Token(&apos;$EOF&apos;, &apos;(eof)&apos;, [], position, position, this, this._defaultExtra);
+        // did we find a match?
+        if (!t) {
+            let unexpected = this._source.substring(position, position + 1);
+            try {
+                this.peek(position + 1);
+            }
+            catch (e) {
+                unexpected += e.unexpected;
+            }
+            const { line, column } = this.strpos(position);
+            const e = new Error(`Unexpected token: ${unexpected} at (${line}:${column})`);
+            e.unexpected = unexpected;
+            e.end = position + unexpected.length;
+            throw e;
+        }
+        return t;
+    }
+    /**
+     * Returns the remaining (un-lexed) source string
+     * @return {string}
+     */
+    remaining() {
+        return this._source.substring(this.position);
+    }
+    /**
+     * Converts a string-index (relative to the source string) to a line and a column.
+     * @param {number} i The index to compute
+     * @return {Position}
+     */
+    strpos(i) {
+        let lines = this._source.substring(0, i).split(/\r?\n/);
+        if (!Array.isArray(lines))
+            lines = [lines];
+        const line = lines.length;
+        const column = lines[lines.length - 1].length + 1;
+        return { line, column };
+    }
+    /**
+     * Defines a token-type. If the token `type` starts with `$SKIP`, then those tokens will be skipped.
+     * @param {string} type The name of this token-type.
+     * @param {RegExp} regex The regular expression that will match this token.
+     * @param {any} [extra] Token-specific extras (will become instance methods/properties on this token type)
+     * @return {Lexer}
+     * @example
+     * const lex = perplex(&apos;...&apos;)
+     *   .token(&apos;ID&apos;, /(([$_a-z]+[$_a-z0-9]*)/i)
+     *   .token(&apos;$SKIP_WS&apos;, /\s+/i)
+     */
+    token(type, regex, extra = null) {
+        regex = normalize(regex);
+        this._tokenTypes.push({ type, regex, extra });
+        return this;
+    }
+}
+export default Lexer;
+//# sourceMappingURL=lexer.js.map</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.5.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

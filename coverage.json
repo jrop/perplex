@@ -1,0 +1,17 @@
+{
+  "coverage": "100%",
+  "expectCount": 23,
+  "actualCount": 23,
+  "files": {
+    "lib/lexer.js": {
+      "expectCount": 14,
+      "actualCount": 14,
+      "undocumentLines": []
+    },
+    "lib/token.js": {
+      "expectCount": 9,
+      "actualCount": 9,
+      "undocumentLines": []
+    }
+  }
+}

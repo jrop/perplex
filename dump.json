@@ -1,0 +1,1736 @@
+[
+  {
+    "__docId__": 0,
+    "kind": "file",
+    "name": "lib/lexer.js",
+    "content": "import Token from './token';\nfunction normalize(regex) {\n    if (!regex.source.startsWith('^'))\n        return new RegExp(`^${regex.source}`, regex.flags);\n    else\n        return regex;\n}\n/**\n * @typedef {{\n *   line: number,\n *   column: number,\n * }} Position\n */\n/**\n * Lexes a source-string into tokens.\n *\n * @example\n * const lex = perplex('...')\n *   .token('ID', /my-id-regex/)\n *   .token('(', /\\(/)\n *   .token(')', /\\)/)\n *   .token('$SKIP_WS', /\\s+/)\n *\n * while ((let t = lex.next()).type != '$EOF') {\n *   console.log(t)\n * }\n */\nclass Lexer {\n    /* tslint:enable */\n    /**\n     * Creates a new Lexer instance\n     * @param {string} source The source string to operate on.\n     */\n    constructor(source) {\n        this._source = source;\n        this._position = 0;\n        this._tokenTypes = [];\n        this._inserted = [];\n        this._defaultExtra = null;\n    }\n    _peekRegex(r, position) {\n        r.lastMatch = 0;\n        let groups = r.exec(this._source.substring(position));\n        if (groups)\n            groups = groups.map(x => x); // only keep array elements (remove \"index\" and \"input\")\n        const match = groups ? groups[0] : null;\n        return { match, groups };\n    }\n    /**\n     * Gets the source being lexed\n     * @type {string}\n     */\n    get source() {\n        return this._source;\n    }\n    /**\n     * Sets the source being lexed\n     * @type {string}\n     */\n    set source(s) {\n        this._source = s;\n        this.position = 0;\n        this._inserted.splice(0, this._inserted.length);\n    }\n    /**\n     * Returns the lexer's position in the source string\n     * @type {number}\n     */\n    get position() {\n        return this._position;\n    }\n    /**\n     * Sets the lexer's position in the source string\n     * @type {number}\n     */\n    set position(pos) {\n        this._position = pos;\n    }\n    /**\n     * Like {@link next}, but throws an exception if the next token is\n     * not of the required type.\n     * @param {string} type The token type expected from {@link next}\n     * @return {Token} Returns the {@link Token} on success\n     */\n    expect(type) {\n        const t = this.next();\n        if (t.type != type) {\n            const pos = t.strpos();\n            throw new Error('Expected ' + type + (t ? ', got ' + t.type : '') + ' at ' + pos.start.line + ':' + pos.start.column);\n        }\n        return t;\n    }\n    /**\n     * Extends Token instances generically.\n     * @param {any} extra The object to be `Object.assign(...)`'d to tokens in general.\n     * @return {Lexer} Returns the Lexer instance.\n     * @example\n     * const lex = perplex(s)\n     *   .extra({\n     *     myMethod() {\n     *       console.log('My custom method')\n     *     }\n     *   })\n     * lex.next().myMethod() // prints 'My custom method'\n     */\n    extra(extra) {\n        this._defaultExtra = extra;\n        return this;\n    }\n    /**\n     * Inserts a transient token into the token stream that will be returned\n     * the next time {@link next} is called.\n     * @param {Token|any} token The token to insert.\n     */\n    insert(token) {\n        if (!(token instanceof Token)) {\n            const extra = Object.assign({}, this._defaultExtra, token);\n            token = new Token('$TRANSIENT', '', [], -1, -1, this, extra);\n        }\n        token.transient = true;\n        this._inserted.push(token);\n    }\n    /**\n     * Consumes and returns the next {@link Token} in the source string.\n     * If there are no more tokens, it returns a {@link Token} of type `$EOF`\n     * @return {Token}\n     */\n    next() {\n        try {\n            const t = this.peek();\n            if (t && !t.transient)\n                this.position = t.end;\n            this._current = t;\n            return t;\n        }\n        catch (e) {\n            this._position = e.end;\n            throw e;\n        }\n    }\n    /**\n     * Returns the next {@link Token} in the source string, but does\n     * not consume it.\n     * If there are no more tokens, it returns a {@link Token} of type `$EOF`\n     * @param {number} [position=`this.position`] The position at which to start reading\n     * @return {Token}\n     */\n    peek(position = this.position) {\n        // first check if we have any feaux tokens to deliver:\n        if (this._inserted.length > 0)\n            return Object.assign(this._inserted.pop());\n        if (position >= this._source.length)\n            return new Token('$EOF', '', [], position, position, this, this._defaultExtra);\n        let t;\n        do {\n            t = null;\n            for (const tokenType of this._tokenTypes) {\n                const { match, groups } = this._peekRegex(tokenType.regex, position);\n                if (match) {\n                    const start = position;\n                    const end = position + match.length;\n                    t = new Token(tokenType.type, match, groups, start, end, this, Object.assign({}, this._defaultExtra, tokenType.extra));\n                    position = end;\n                    break; // break out of for\n                }\n            }\n        } while (t && t.type.startsWith('$SKIP'));\n        if (!t && position >= this._source.length)\n            return new Token('$EOF', '(eof)', [], position, position, this, this._defaultExtra);\n        // did we find a match?\n        if (!t) {\n            let unexpected = this._source.substring(position, position + 1);\n            try {\n                this.peek(position + 1);\n            }\n            catch (e) {\n                unexpected += e.unexpected;\n            }\n            const { line, column } = this.strpos(position);\n            const e = new Error(`Unexpected token: ${unexpected} at (${line}:${column})`);\n            e.unexpected = unexpected;\n            e.end = position + unexpected.length;\n            throw e;\n        }\n        return t;\n    }\n    /**\n     * Returns the remaining (un-lexed) source string\n     * @return {string}\n     */\n    remaining() {\n        return this._source.substring(this.position);\n    }\n    /**\n     * Converts a string-index (relative to the source string) to a line and a column.\n     * @param {number} i The index to compute\n     * @return {Position}\n     */\n    strpos(i) {\n        let lines = this._source.substring(0, i).split(/\\r?\\n/);\n        if (!Array.isArray(lines))\n            lines = [lines];\n        const line = lines.length;\n        const column = lines[lines.length - 1].length + 1;\n        return { line, column };\n    }\n    /**\n     * Defines a token-type. If the token `type` starts with `$SKIP`, then those tokens will be skipped.\n     * @param {string} type The name of this token-type.\n     * @param {RegExp} regex The regular expression that will match this token.\n     * @param {any} [extra] Token-specific extras (will become instance methods/properties on this token type)\n     * @return {Lexer}\n     * @example\n     * const lex = perplex('...')\n     *   .token('ID', /(([$_a-z]+[$_a-z0-9]*)/i)\n     *   .token('$SKIP_WS', /\\s+/i)\n     */\n    token(type, regex, extra = null) {\n        regex = normalize(regex);\n        this._tokenTypes.push({ type, regex, extra });\n        return this;\n    }\n}\nexport default Lexer;\n//# sourceMappingURL=lexer.js.map",
+    "static": true,
+    "longname": "lib/lexer.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 1,
+    "kind": "function",
+    "name": "normalize",
+    "memberof": "lib/lexer.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "lib/lexer.js~normalize",
+    "access": null,
+    "export": false,
+    "importPath": "perplex/lib/lexer.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "regex",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 2,
+    "kind": "typedef",
+    "name": "Position",
+    "memberof": "lib/lexer.js",
+    "static": true,
+    "longname": "lib/lexer.js~Position",
+    "access": null,
+    "description": "",
+    "type": {
+      "types": [
+        "{\n  line: number,\n  column: number,\n}"
+      ],
+      "optional": false,
+      "name": "Position"
+    }
+  },
+  {
+    "__docId__": 3,
+    "kind": "class",
+    "name": "Lexer",
+    "memberof": "lib/lexer.js",
+    "static": true,
+    "longname": "lib/lexer.js~Lexer",
+    "access": null,
+    "export": true,
+    "importPath": "perplex/lib/lexer.js",
+    "importStyle": "Lexer",
+    "description": "Lexes a source-string into tokens.",
+    "examples": [
+      "const lex = perplex('...')\n  .token('ID', /my-id-regex/)\n  .token('(', /\\(/)\n  .token(')', /\\)/)\n  .token('$SKIP_WS', /\\s+/)\n\nwhile ((let t = lex.next()).type != '$EOF') {\n  console.log(t)\n}"
+    ],
+    "lineNumber": 28,
+    "interface": false
+  },
+  {
+    "__docId__": 4,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#constructor",
+    "access": null,
+    "description": "Creates a new Lexer instance",
+    "lineNumber": 34,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "source",
+        "description": "The source string to operate on."
+      }
+    ]
+  },
+  {
+    "__docId__": 5,
+    "kind": "member",
+    "name": "_source",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_source",
+    "access": null,
+    "description": null,
+    "lineNumber": 35,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 6,
+    "kind": "member",
+    "name": "_position",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_position",
+    "access": null,
+    "description": null,
+    "lineNumber": 36,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 7,
+    "kind": "member",
+    "name": "_tokenTypes",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_tokenTypes",
+    "access": null,
+    "description": null,
+    "lineNumber": 37,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*[]"
+      ]
+    }
+  },
+  {
+    "__docId__": 8,
+    "kind": "member",
+    "name": "_inserted",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_inserted",
+    "access": null,
+    "description": null,
+    "lineNumber": 38,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*[]"
+      ]
+    }
+  },
+  {
+    "__docId__": 9,
+    "kind": "member",
+    "name": "_defaultExtra",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_defaultExtra",
+    "access": null,
+    "description": null,
+    "lineNumber": 39,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 10,
+    "kind": "method",
+    "name": "_peekRegex",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_peekRegex",
+    "access": null,
+    "description": null,
+    "lineNumber": 41,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "r",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "position",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "{\"match\": *, \"groups\": *}"
+      ]
+    }
+  },
+  {
+    "__docId__": 11,
+    "kind": "get",
+    "name": "source",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#source",
+    "access": null,
+    "description": "Gets the source being lexed",
+    "lineNumber": 53,
+    "type": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 12,
+    "kind": "set",
+    "name": "source",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#source",
+    "access": null,
+    "description": "Sets the source being lexed",
+    "lineNumber": 60,
+    "type": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 13,
+    "kind": "member",
+    "name": "_source",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_source",
+    "access": null,
+    "description": null,
+    "lineNumber": 61,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 14,
+    "kind": "member",
+    "name": "position",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#position",
+    "access": null,
+    "description": null,
+    "lineNumber": 62,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 15,
+    "kind": "get",
+    "name": "position",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#position",
+    "access": null,
+    "description": "Returns the lexer's position in the source string",
+    "lineNumber": 69,
+    "type": {
+      "nullable": null,
+      "types": [
+        "number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 16,
+    "kind": "set",
+    "name": "position",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#position",
+    "access": null,
+    "description": "Sets the lexer's position in the source string",
+    "lineNumber": 76,
+    "type": {
+      "nullable": null,
+      "types": [
+        "number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 17,
+    "kind": "member",
+    "name": "_position",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_position",
+    "access": null,
+    "description": null,
+    "lineNumber": 77,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 18,
+    "kind": "method",
+    "name": "expect",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#expect",
+    "access": null,
+    "description": "Like {@link next}, but throws an exception if the next token is\nnot of the required type.",
+    "lineNumber": 85,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "type",
+        "description": "The token type expected from {@link next}"
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Token"
+      ],
+      "spread": false,
+      "description": "Returns the {@link Token} on success"
+    }
+  },
+  {
+    "__docId__": 19,
+    "kind": "method",
+    "name": "extra",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#extra",
+    "access": null,
+    "description": "Extends Token instances generically.",
+    "examples": [
+      "const lex = perplex(s)\n  .extra({\n    myMethod() {\n      console.log('My custom method')\n    }\n  })\nlex.next().myMethod() // prints 'My custom method'"
+    ],
+    "lineNumber": 106,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "any"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "extra",
+        "description": "The object to be `Object.assign(...)`'d to tokens in general."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Lexer"
+      ],
+      "spread": false,
+      "description": "Returns the Lexer instance."
+    }
+  },
+  {
+    "__docId__": 20,
+    "kind": "member",
+    "name": "_defaultExtra",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_defaultExtra",
+    "access": null,
+    "description": null,
+    "lineNumber": 107,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 21,
+    "kind": "method",
+    "name": "insert",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#insert",
+    "access": null,
+    "description": "Inserts a transient token into the token stream that will be returned\nthe next time {@link next} is called.",
+    "lineNumber": 115,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Token",
+          "any"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "token",
+        "description": "The token to insert."
+      }
+    ]
+  },
+  {
+    "__docId__": 22,
+    "kind": "method",
+    "name": "next",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#next",
+    "access": null,
+    "description": "Consumes and returns the next {@link Token} in the source string.\nIf there are no more tokens, it returns a {@link Token} of type `$EOF`",
+    "lineNumber": 128,
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Token"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 23,
+    "kind": "member",
+    "name": "position",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#position",
+    "access": null,
+    "description": null,
+    "lineNumber": 132,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 24,
+    "kind": "member",
+    "name": "_current",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_current",
+    "access": null,
+    "description": null,
+    "lineNumber": 133,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 25,
+    "kind": "member",
+    "name": "_position",
+    "memberof": "lib/lexer.js~Lexer",
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#_position",
+    "access": null,
+    "description": null,
+    "lineNumber": 137,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 26,
+    "kind": "method",
+    "name": "peek",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#peek",
+    "access": null,
+    "description": "Returns the next {@link Token} in the source string, but does\nnot consume it.\nIf there are no more tokens, it returns a {@link Token} of type `$EOF`",
+    "lineNumber": 148,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "`this.position`",
+        "defaultRaw": "`this.position`",
+        "name": "position",
+        "description": "The position at which to start reading"
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Token"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 27,
+    "kind": "method",
+    "name": "remaining",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#remaining",
+    "access": null,
+    "description": "Returns the remaining (un-lexed) source string",
+    "lineNumber": 191,
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 28,
+    "kind": "method",
+    "name": "strpos",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#strpos",
+    "access": null,
+    "description": "Converts a string-index (relative to the source string) to a line and a column.",
+    "lineNumber": 199,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "i",
+        "description": "The index to compute"
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Position"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 29,
+    "kind": "method",
+    "name": "token",
+    "memberof": "lib/lexer.js~Lexer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/lexer.js~Lexer#token",
+    "access": null,
+    "description": "Defines a token-type. If the token `type` starts with `$SKIP`, then those tokens will be skipped.",
+    "examples": [
+      "const lex = perplex('...')\n  .token('ID', /(([$_a-z]+[$_a-z0-9]*)/i)\n  .token('$SKIP_WS', /\\s+/i)"
+    ],
+    "lineNumber": 218,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "type",
+        "description": "The name of this token-type."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "RegExp"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "regex",
+        "description": "The regular expression that will match this token."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "any"
+        ],
+        "spread": false,
+        "optional": true,
+        "name": "extra",
+        "description": "Token-specific extras (will become instance methods/properties on this token type)"
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Lexer"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 30,
+    "kind": "file",
+    "name": "lib/token.js",
+    "content": "/**\n * @typedef {{\n *   start: Position,\n *   end: Position,\n * }} TokenPosition\n */\n/**\n * Represents a token instance\n */\nclass Token {\n    /* tslint:disable:indent */\n    /**\n     * Constructs a token\n     * @param {string} type The token type\n     * @param {string} match The string that the lexer consumed to create this token\n     * @param {string[]} groups Any RegExp groups that accrued during the match\n     * @param {number} start The string position where this match started\n     * @param {number} end The string position where this match ends\n     * @param {Lexer} lexer The parent {@link Lexer}\n     * @param {any} [extra] Extra props/methods to tack on to this Token instance\n     */\n    constructor(type, match, groups, start, end, lexer, extra) {\n        /* tslint:enable */\n        /**\n         * The token type\n         * @type {string}\n         */\n        this.type = type;\n        /**\n         * The string that the lexer consumed to create this token\n         * @type {string}\n         */\n        this.match = match;\n        /**\n         * Any RegExp groups that accrued during the match\n         * @type {string[]}\n         */\n        this.groups = groups;\n        /**\n         * The string position where this match started\n         * @type {number}\n         */\n        this.start = start;\n        /**\n         * The string position where this match ends\n         * @type {number}\n         */\n        this.end = end;\n        /**\n         * The parent {@link Lexer}\n         * @type {Lexer}\n         */\n        this.lexer = lexer;\n        for (const key in extra) {\n            if (typeof extra[key] == 'function')\n                /** @private */\n                this[key] = extra[key].bind(this);\n            else\n                this[key] = extra[key];\n        }\n    }\n    /**\n     * Returns the bounds of this token, each in `{line, column}` format\n     * @return {TokenPosition}\n     */\n    strpos() {\n        const start = this.lexer.strpos(this.start);\n        const end = this.lexer.strpos(this.end);\n        return { start, end };\n    }\n}\nexport default Token;\n//# sourceMappingURL=token.js.map",
+    "static": true,
+    "longname": "lib/token.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 31,
+    "kind": "typedef",
+    "name": "TokenPosition",
+    "memberof": "lib/token.js",
+    "static": true,
+    "longname": "lib/token.js~TokenPosition",
+    "access": null,
+    "description": "",
+    "type": {
+      "types": [
+        "{\n  start: Position,\n  end: Position,\n}"
+      ],
+      "optional": false,
+      "name": "TokenPosition"
+    }
+  },
+  {
+    "__docId__": 32,
+    "kind": "class",
+    "name": "Token",
+    "memberof": "lib/token.js",
+    "static": true,
+    "longname": "lib/token.js~Token",
+    "access": null,
+    "export": true,
+    "importPath": "perplex/lib/token.js",
+    "importStyle": "Token",
+    "description": "Represents a token instance",
+    "lineNumber": 10,
+    "interface": false
+  },
+  {
+    "__docId__": 33,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "lib/token.js~Token",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/token.js~Token#constructor",
+    "access": null,
+    "description": "Constructs a token",
+    "lineNumber": 22,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "type",
+        "description": "The token type"
+      },
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "match",
+        "description": "The string that the lexer consumed to create this token"
+      },
+      {
+        "nullable": null,
+        "types": [
+          "string[]"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "groups",
+        "description": "Any RegExp groups that accrued during the match"
+      },
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "start",
+        "description": "The string position where this match started"
+      },
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "end",
+        "description": "The string position where this match ends"
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Lexer"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "lexer",
+        "description": "The parent {@link Lexer}"
+      },
+      {
+        "nullable": null,
+        "types": [
+          "any"
+        ],
+        "spread": false,
+        "optional": true,
+        "name": "extra",
+        "description": "Extra props/methods to tack on to this Token instance"
+      }
+    ]
+  },
+  {
+    "__docId__": 34,
+    "kind": "member",
+    "name": "type",
+    "memberof": "lib/token.js~Token",
+    "static": false,
+    "longname": "lib/token.js~Token#type",
+    "access": null,
+    "description": "The token type",
+    "lineNumber": 28,
+    "type": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 35,
+    "kind": "member",
+    "name": "match",
+    "memberof": "lib/token.js~Token",
+    "static": false,
+    "longname": "lib/token.js~Token#match",
+    "access": null,
+    "description": "The string that the lexer consumed to create this token",
+    "lineNumber": 33,
+    "type": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 36,
+    "kind": "member",
+    "name": "groups",
+    "memberof": "lib/token.js~Token",
+    "static": false,
+    "longname": "lib/token.js~Token#groups",
+    "access": null,
+    "description": "Any RegExp groups that accrued during the match",
+    "lineNumber": 38,
+    "type": {
+      "nullable": null,
+      "types": [
+        "string[]"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 37,
+    "kind": "member",
+    "name": "start",
+    "memberof": "lib/token.js~Token",
+    "static": false,
+    "longname": "lib/token.js~Token#start",
+    "access": null,
+    "description": "The string position where this match started",
+    "lineNumber": 43,
+    "type": {
+      "nullable": null,
+      "types": [
+        "number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 38,
+    "kind": "member",
+    "name": "end",
+    "memberof": "lib/token.js~Token",
+    "static": false,
+    "longname": "lib/token.js~Token#end",
+    "access": null,
+    "description": "The string position where this match ends",
+    "lineNumber": 48,
+    "type": {
+      "nullable": null,
+      "types": [
+        "number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 39,
+    "kind": "member",
+    "name": "lexer",
+    "memberof": "lib/token.js~Token",
+    "static": false,
+    "longname": "lib/token.js~Token#lexer",
+    "access": null,
+    "description": "The parent {@link Lexer}",
+    "lineNumber": 53,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Lexer"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 40,
+    "kind": "member",
+    "name": "[key]",
+    "memberof": "lib/token.js~Token",
+    "static": false,
+    "longname": "lib/token.js~Token#[key]",
+    "access": "private",
+    "description": null,
+    "lineNumber": 57,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 41,
+    "kind": "member",
+    "name": "[key]",
+    "memberof": "lib/token.js~Token",
+    "static": false,
+    "longname": "lib/token.js~Token#[key]",
+    "access": null,
+    "description": null,
+    "lineNumber": 59,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 42,
+    "kind": "method",
+    "name": "strpos",
+    "memberof": "lib/token.js~Token",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "lib/token.js~Token#strpos",
+    "access": null,
+    "description": "Returns the bounds of this token, each in `{line, column}` format",
+    "lineNumber": 66,
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "TokenPosition"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 44,
+    "kind": "external",
+    "name": "Infinity",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Infinity",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 45,
+    "kind": "external",
+    "name": "NaN",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~NaN",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 46,
+    "kind": "external",
+    "name": "undefined",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~undefined",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 47,
+    "kind": "external",
+    "name": "null",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~null",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 48,
+    "kind": "external",
+    "name": "Object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 49,
+    "kind": "external",
+    "name": "object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 50,
+    "kind": "external",
+    "name": "Function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 51,
+    "kind": "external",
+    "name": "function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 52,
+    "kind": "external",
+    "name": "Boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 53,
+    "kind": "external",
+    "name": "boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 54,
+    "kind": "external",
+    "name": "Symbol",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Symbol",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 55,
+    "kind": "external",
+    "name": "Error",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Error",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 56,
+    "kind": "external",
+    "name": "EvalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~EvalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 57,
+    "kind": "external",
+    "name": "InternalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~InternalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 58,
+    "kind": "external",
+    "name": "RangeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RangeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 59,
+    "kind": "external",
+    "name": "ReferenceError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ReferenceError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 60,
+    "kind": "external",
+    "name": "SyntaxError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~SyntaxError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 61,
+    "kind": "external",
+    "name": "TypeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~TypeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 62,
+    "kind": "external",
+    "name": "URIError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~URIError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 63,
+    "kind": "external",
+    "name": "Number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 64,
+    "kind": "external",
+    "name": "number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 65,
+    "kind": "external",
+    "name": "Date",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Date",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 66,
+    "kind": "external",
+    "name": "String",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~String",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 67,
+    "kind": "external",
+    "name": "string",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~string",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 68,
+    "kind": "external",
+    "name": "RegExp",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RegExp",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 69,
+    "kind": "external",
+    "name": "Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 70,
+    "kind": "external",
+    "name": "Int8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 71,
+    "kind": "external",
+    "name": "Uint8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 72,
+    "kind": "external",
+    "name": "Uint8ClampedArray",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8ClampedArray",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 73,
+    "kind": "external",
+    "name": "Int16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 74,
+    "kind": "external",
+    "name": "Uint16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 75,
+    "kind": "external",
+    "name": "Int32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 76,
+    "kind": "external",
+    "name": "Uint32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 77,
+    "kind": "external",
+    "name": "Float32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 78,
+    "kind": "external",
+    "name": "Float64Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float64Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 79,
+    "kind": "external",
+    "name": "Map",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Map",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 80,
+    "kind": "external",
+    "name": "Set",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Set",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 81,
+    "kind": "external",
+    "name": "WeakMap",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakMap",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 82,
+    "kind": "external",
+    "name": "WeakSet",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakSet",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 83,
+    "kind": "external",
+    "name": "ArrayBuffer",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ArrayBuffer",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 84,
+    "kind": "external",
+    "name": "DataView",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~DataView",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 85,
+    "kind": "external",
+    "name": "JSON",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~JSON",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 86,
+    "kind": "external",
+    "name": "Promise",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Promise",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 87,
+    "kind": "external",
+    "name": "Generator",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Generator",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 88,
+    "kind": "external",
+    "name": "GeneratorFunction",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~GeneratorFunction",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 89,
+    "kind": "external",
+    "name": "Reflect",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Reflect",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 90,
+    "kind": "external",
+    "name": "Proxy",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Proxy",
+    "access": null,
+    "description": "",
+    "lineNumber": 193,
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 92,
+    "kind": "external",
+    "name": "CanvasRenderingContext2D",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~CanvasRenderingContext2D",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 93,
+    "kind": "external",
+    "name": "DocumentFragment",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~DocumentFragment",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 94,
+    "kind": "external",
+    "name": "Element",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Element",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~Element",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 95,
+    "kind": "external",
+    "name": "Event",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Event",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~Event",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 96,
+    "kind": "external",
+    "name": "Node",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Node",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~Node",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 97,
+    "kind": "external",
+    "name": "NodeList",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/NodeList",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~NodeList",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 98,
+    "kind": "external",
+    "name": "XMLHttpRequest",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~XMLHttpRequest",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 99,
+    "kind": "external",
+    "name": "AudioContext",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/AudioContext",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~AudioContext",
+    "access": null,
+    "description": "",
+    "lineNumber": 34,
+    "builtinExternal": true
+  }
+]
