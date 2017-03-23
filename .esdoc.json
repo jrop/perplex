@@ -1,0 +1,5 @@
+{
+	"source": "lib/",
+	"destination": "gh-pages/",
+	"excludes": ["test\\.js"]
+}

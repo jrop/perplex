@@ -1,17 +1,14 @@
-'use strict'
+import * as assert from 'assert'
+import * as except from 'except'
+import Lexer from './lexer'
 
-const assert = require('assert')
-const except = require('except')
-const lexer = require('./lib/index')
-
-const lex = lexer()
-	.extra({ extra: true })
+const lex = new Lexer('')
+	.extra({extra: true})
 	.token('NUMBER', /\d+/)
 	.token('$SKIP_SINGLE_LINE_COMMENT', /\/\/[^\n]*/)
 	.token('$SKIP_WHITESPACE', /^\s+/)
 
 describe('lexer', function () {
-
 	beforeEach(function () {
 		lex.source = '  4 5 6  '
 	})
@@ -43,7 +40,7 @@ describe('lexer', function () {
 
 	it('.insert()', function () {
 		lex.insert({ type: 'MY_TRANSIENT' })
-		assert.deepEqual(except(lex.next(), 'lexer'), {
+		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), {
 			type: 'MY_TRANSIENT',
 			match: '',
 			groups: [],
@@ -52,10 +49,10 @@ describe('lexer', function () {
 			transient: true,
 			extra: true,
 		})
-		assert.deepEqual(except(lex.next(), 'lexer'), FOUR)
+		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), FOUR)
 
 		lex.insert({ type: 'MY_TRANSIENT' })
-		assert.deepEqual(except(lex.next(), 'lexer'), {
+		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), {
 			type: 'MY_TRANSIENT',
 			match: '',
 			groups: [],
@@ -65,22 +62,22 @@ describe('lexer', function () {
 			extra: true,
 		})
 
-		assert.deepEqual(except(lex.next(), 'lexer'), FIVE)
+		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), FIVE)
 	})
 
 	it('.peek()', function () {
-		assert.deepEqual(except(lex.peek(), 'lexer'), FOUR)
+		assert.deepEqual(except(lex.peek(), 'lexer', 'strpos'), FOUR)
 
 		lex.next()
-		assert.deepEqual(except(lex.peek(), 'lexer'), FIVE)
-		assert.deepEqual(except(lex.peek(), 'lexer'), FIVE)
+		assert.deepEqual(except(lex.peek(), 'lexer', 'strpos'), FIVE)
+		assert.deepEqual(except(lex.peek(), 'lexer', 'strpos'), FIVE)
 	})
 
 	it('.next()', function () {
-		assert.deepEqual(except(lex.next(), 'lexer'), FOUR)
-		assert.deepEqual(except(lex.next(), 'lexer'), FIVE)
-		assert.deepEqual(except(lex.next(), 'lexer'), SIX)
-		assert.deepEqual(except(lex.next(), 'lexer'), {
+		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), FOUR)
+		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), FIVE)
+		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), SIX)
+		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), {
 			type: '$EOF',
 			match: '(eof)',
 			groups: [],
