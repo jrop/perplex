@@ -2,8 +2,7 @@ import * as assert from 'assert'
 import * as except from 'except'
 import Lexer from './lexer'
 
-const lex = new Lexer('')
-	.extra({extra: true})
+const lex = new Lexer()
 	.token('WS', /\s+/).disable('WS')
 	.token('NUMBER', /\d+/)
 	.token('$SKIP_SINGLE_LINE_COMMENT', /\/\/[^\n]*/)
@@ -20,7 +19,6 @@ describe('lexer', function () {
 		groups: [ '4' ],
 		start: 2,
 		end: 3,
-		extra: true,
 	}
 	const FIVE = {
 		type: 'NUMBER',
@@ -28,7 +26,6 @@ describe('lexer', function () {
 		groups: [ '5' ],
 		start: 4,
 		end: 5,
-		extra: true,
 	}
 	const SIX = {
 		type: 'NUMBER',
@@ -36,35 +33,7 @@ describe('lexer', function () {
 		groups: [ '6' ],
 		start: 6,
 		end: 7,
-		extra: true,
 	}
-
-	it('.insert()', function () {
-		lex.insert({ type: 'MY_TRANSIENT' })
-		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), {
-			type: 'MY_TRANSIENT',
-			match: '',
-			groups: [],
-			start: -1,
-			end: -1,
-			transient: true,
-			extra: true,
-		})
-		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), FOUR)
-
-		lex.insert({ type: 'MY_TRANSIENT' })
-		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), {
-			type: 'MY_TRANSIENT',
-			match: '',
-			groups: [],
-			start: -1,
-			end: -1,
-			transient: true,
-			extra: true,
-		})
-
-		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), FIVE)
-	})
 
 	it('.peek()', function () {
 		assert.deepEqual(except(lex.peek(), 'lexer', 'strpos'), FOUR)
@@ -84,7 +53,6 @@ describe('lexer', function () {
 			groups: [],
 			start: 9,
 			end: 9,
-			extra: true,
 		})
 	})
 
@@ -93,9 +61,18 @@ describe('lexer', function () {
 		assert.throws(() => lex.expect('NOPE'))
 	})
 
-	it('.remaining()', function () {
-		lex.next() // 4
-		assert.equal(lex.remaining().trim(), '5 6')
+	it('.push()/.pop()', function () {
+		const source = 'abc123def'
+		const lexer = new Lexer().token('ID', /[a-z]+/)
+
+		lexer.source = source
+		assert.equal(lexer.expect('ID').match, 'abc')
+
+		lexer.push(new Lexer().token('NUM', /[0-9]+/))
+		assert.equal(lexer.expect('NUM').match, '123')
+
+		lexer.pop()
+		assert.equal(lexer.expect('ID').match, 'def')
 	})
 
 	it('.source (get)', function () {

@@ -35,38 +35,31 @@ class Lexer {
 	private _tokenTypes: {
 		type: string,
 		regex: RegExp,
-		extra: any,
 		enabled: boolean,
 	}[]
-	private _inserted: Token[]
-	private _defaultExtra: any
-
-	private _current: Token
+	private _subLexer: Lexer
 	/* tslint:enable */
 
 	/**
 	 * Creates a new Lexer instance
-	 * @param {string} source The source string to operate on.
+	 * @param {string} [source = ''] The source string to operate on.
 	 */
-	constructor(source: string) {
+	constructor(source: string = '') {
 		this._source = source
 		this._position = 0
 		this._tokenTypes = []
-		this._inserted = []
-		this._defaultExtra = null
+		this._subLexer = null
 	}
 
-	private _peekRegex(r, position): {
+	private _peekRegex(r: RegExp, position: number): {
 		match: string,
 		groups: string[],
 	} {
-		r.lastMatch = 0
-
-		let groups = r.exec(this._source.substring(position))
-		if (groups) groups = groups.map(x => x) // only keep array elements (remove "index" and "input")
-
+		r.lastIndex = 0
+		const groups = r.exec(this._source.substring(position))
+		const sGroups = groups ? groups.map(x => x) : null  // only keep array elements (remove "index" and "input")
 		const match = groups ? groups[0] : null
-		return {match, groups}
+		return {match, groups: sGroups}
 	}
 
 	/**
@@ -84,7 +77,6 @@ class Lexer {
 	set source(s: string) {
 		this._source = s
 		this.position = 0
-		this._inserted.splice(0, this._inserted.length)
 	}
 
 	/**
@@ -141,48 +133,16 @@ class Lexer {
 	}
 
 	/**
-	 * Extends Token instances generically.
-	 * @param {any} extra The object to be `Object.assign(...)`'d to tokens in general.
-	 * @return {Lexer} Returns the Lexer instance.
-	 * @example
-	 * const lex = perplex(s)
-	 *   .extra({
-	 *     myMethod() {
-	 *       console.log('My custom method')
-	 *     }
-	 *   })
-	 * lex.next().myMethod() // prints 'My custom method'
-	 */
-	extra(extra: any): Lexer {
-		this._defaultExtra = extra
-		return this
-	}
-
-	/**
-	 * Inserts a transient token into the token stream that will be returned
-	 * the next time {@link next} is called.
-	 * @param {Token|any} token The token to insert.
-	 */
-	insert(token: Token|any) {
-		if (!(token instanceof Token)) {
-			const extra = Object.assign({}, this._defaultExtra, token)
-			token = new Token('$TRANSIENT', '', [], -1, -1, this, extra)
-		}
-		token.transient = true
-		this._inserted.push(token)
-	}
-
-	/**
 	 * Consumes and returns the next {@link Token} in the source string.
 	 * If there are no more tokens, it returns a {@link Token} of type `$EOF`
 	 * @return {Token}
 	 */
 	next(): Token {
+		if (this._subLexer)
+			return this._subLexer.next()
 		try {
 			const t = this.peek()
-			if (t && !t.transient)
-				this.position = t.end
-			this._current = t
+			this.position = t.end
 			return t
 		} catch (e) {
 			this._position = e.end
@@ -198,12 +158,13 @@ class Lexer {
 	 * @return {Token}
 	 */
 	peek(position: number = this.position): Token {
-		// first check if we have any feaux tokens to deliver:
-		if (this._inserted.length > 0)
-			return this._inserted.pop()
+		if (this._subLexer) {
+			console.log('SUB found!', this._subLexer)
+			return this._subLexer.peek(position)
+		}
 
 		if (position >= this._source.length)
-			return new Token('$EOF', '', [], position, position, this, this._defaultExtra)
+			return new Token('$EOF', '', [], position, position, this)
 
 		let t
 		do {
@@ -213,7 +174,7 @@ class Lexer {
 				if (match) {
 					const start = position
 					const end = position + match.length
-					t = new Token(tokenType.type, match, groups, start, end, this, Object.assign({}, this._defaultExtra, tokenType.extra))
+					t = new Token(tokenType.type, match, groups, start, end, this)
 					position = end
 					break // break out of for
 				}
@@ -221,7 +182,7 @@ class Lexer {
 		} while (t && t.type.startsWith('$SKIP'))
 
 		if (!t && position >= this._source.length)
-			return new Token('$EOF', '(eof)', [], position, position, this, this._defaultExtra)
+			return new Token('$EOF', '(eof)', [], position, position, this)
 
 		// did we find a match?
 		if (!t) {
@@ -242,11 +203,29 @@ class Lexer {
 	}
 
 	/**
-	 * Returns the remaining (un-lexed) source string
-	 * @return {string}
+	 * Pops the sub-lexer and returns lexing-control to `this`
 	 */
-	remaining() {
-		return this._source.substring(this.position)
+	pop() {
+		if (!this._subLexer)
+			throw new Error('Sub-lexer is not set; cannot `pop(...)`')
+		this.position = this._subLexer.position
+		this._subLexer = null
+	}
+
+	/**
+	 * Sets a sub-lexer that will operate on the source stream instead of `this`.
+	 * @param {Lexer} lexer The sub-lexer to set
+	 * @returns {Lexer} Returns `this`
+	 */
+	push(lexer: Lexer): Lexer {
+		if (this._subLexer)
+			throw new Error('Sub-lexer already set; cannot `push(...)`')
+		if (lexer === this || lexer._subLexer === this)
+			return this
+		lexer.source = this.source
+		lexer.position = this.position
+		this._subLexer = lexer
+		return this
 	}
 
 	/**
@@ -271,16 +250,15 @@ class Lexer {
 	 * Defines a token-type. If the token `type` starts with `$SKIP`, then those tokens will be skipped.
 	 * @param {string} type The name of this token-type.
 	 * @param {RegExp} regex The regular expression that will match this token.
-	 * @param {any} [extra] Token-specific extras (will become instance methods/properties on this token type)
 	 * @return {Lexer}
 	 * @example
 	 * const lex = perplex('...')
 	 *   .token('ID', /(([$_a-z]+[$_a-z0-9]*)/i)
 	 *   .token('$SKIP_WS', /\s+/i)
 	 */
-	token(type: string, regex: RegExp, extra: any = null): Lexer {
+	token(type: string, regex: RegExp): Lexer {
 		regex = normalize(regex)
-		this._tokenTypes.push({type, regex, extra, enabled: true})
+		this._tokenTypes.push({type, regex, enabled: true})
 		return this
 	}
 }
