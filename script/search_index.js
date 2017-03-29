@@ -354,6 +354,18 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
+    "lib/lexer.js~lexer#disable",
+    "class/lib/lexer.js~Lexer.html#instance-method-disable",
+    "lib/lexer.js~Lexer#disable",
+    "method"
+  ],
+  [
+    "lib/lexer.js~lexer#enable",
+    "class/lib/lexer.js~Lexer.html#instance-method-enable",
+    "lib/lexer.js~Lexer#enable",
+    "method"
+  ],
+  [
     "lib/lexer.js~lexer#expect",
     "class/lib/lexer.js~Lexer.html#instance-method-expect",
     "lib/lexer.js~Lexer#expect",

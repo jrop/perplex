@@ -1,6 +1,6 @@
 {
   "name": "perplex",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -33,7 +33,11 @@
     "registry": "https://registry.npmjs.org/"
   },
   "files": [
-    "lib/**/*.js",
-    "index.js"
+    "lib/lexer.js",
+    "lib/lexer.d.ts",
+    "lib/token.js",
+    "lib/token.d.ts",
+    "index.js",
+    "index.d.ts"
   ]
 }

@@ -120,6 +120,26 @@ class Lexer {
         this._position = pos;
     }
     /**
+     * Disables the specified token-type
+     * @param {string} type The token type to disable
+     * @returns {Lexer}
+     */
+    disable(type) {
+        return this.enable(type, false);
+    }
+    /**
+     * Enables/disables the specified token-type
+     * @param {string} type The token type to enable/disable
+     * @param {boolean} [enabled=true] Whether to enable/disable the token type
+     * @returns {Lexer}
+     */
+    enable(type, enabled = true) {
+        this._tokenTypes
+            .filter(t =&gt; t.type == type)
+            .forEach(t =&gt; t.enabled = enabled);
+        return this;
+    }
+    /**
      * Like {@link next}, but throws an exception if the next token is
      * not of the required type.
      * @param {string} type The token type expected from {@link next}
@@ -191,13 +211,13 @@ class Lexer {
     peek(position = this.position) {
         // first check if we have any feaux tokens to deliver:
         if (this._inserted.length &gt; 0)
-            return Object.assign(this._inserted.pop());
+            return this._inserted.pop();
         if (position &gt;= this._source.length)
             return new Token(&apos;$EOF&apos;, &apos;&apos;, [], position, position, this, this._defaultExtra);
         let t;
         do {
             t = null;
-            for (const tokenType of this._tokenTypes) {
+            for (const tokenType of this._tokenTypes.filter(t =&gt; t.enabled)) {
                 const { match, groups } = this._peekRegex(tokenType.regex, position);
                 if (match) {
                     const start = position;
@@ -260,7 +280,7 @@ class Lexer {
      */
     token(type, regex, extra = null) {
         regex = normalize(regex);
-        this._tokenTypes.push({ type, regex, extra });
+        this._tokenTypes.push({ type, regex, extra, enabled: true });
         return this;
     }
 }
