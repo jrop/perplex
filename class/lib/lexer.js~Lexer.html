@@ -353,63 +353,6 @@ not of the required type.</p>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-extra">extra</a></span></span><span data-ice="signature">(extra: <span>any</span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p>Extends Token instances generically.</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      
-      
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-insert">insert</a></span></span><span data-ice="signature">(token: <span><a href="class/lib/token.js~Token.html">Token</a></span> | <span>any</span>)</span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p>Inserts a transient token into the token stream that will be returned
-the next time <span><a href="class/lib/lexer.js~Lexer.html#instance-method-next">next</a></span> is called.</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      
-      
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
           <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-next">next</a></span></span><span data-ice="signature">(): <span><a href="class/lib/token.js~Token.html">Token</a></span></span>
         </p>
       </div>
@@ -467,13 +410,41 @@ not consume it.</p>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-remaining">remaining</a></span></span><span data-ice="signature">(): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-pop">pop</a></span></span><span data-ice="signature">()</span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Returns the remaining (un-lexed) source string</p>
+        <div data-ice="description"><p>Pops the sub-lexer and returns lexing-control to <code>this</code></p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-push">push</a></span></span><span data-ice="signature">(lexer: <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Sets a sub-lexer that will operate on the source stream instead of <code>this</code>.</p>
 </div>
       </div>
     </td>
@@ -523,7 +494,7 @@ not consume it.</p>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-token">token</a></span></span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, regex: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp">RegExp</a></span>, extra: <span>any</span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-token">token</a></span></span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, regex: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp">RegExp</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
         </p>
       </div>
       <div>
@@ -583,7 +554,8 @@ not consume it.</p>
     <tr data-ice="property" data-depth="0">
       <td data-ice="name" data-depth="0">source</td>
       <td data-ice="type"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></td>
-      <td data-ice="appendix"></td>
+      <td data-ice="appendix"><ul><li>optional</li>
+<li>default:  &apos;&apos;</li></ul></td>
       <td data-ice="description"><p>The source string to operate on.</p>
 </td>
     </tr>
@@ -624,7 +596,7 @@ not consume it.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber69">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber66">source</a></span></span>
     </span>
   </h3>
 
@@ -668,7 +640,7 @@ not consume it.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber76">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber73">source</a></span></span>
     </span>
   </h3>
 
@@ -712,7 +684,7 @@ not consume it.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber53">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber51">source</a></span></span>
     </span>
   </h3>
 
@@ -756,7 +728,7 @@ not consume it.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber60">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber58">source</a></span></span>
     </span>
   </h3>
 
@@ -803,7 +775,7 @@ not consume it.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber84">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber81">source</a></span></span>
     </span>
   </h3>
 
@@ -876,7 +848,7 @@ not consume it.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber93">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber90">source</a></span></span>
     </span>
   </h3>
 
@@ -957,7 +929,7 @@ not consume it.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber105">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber102">source</a></span></span>
     </span>
   </h3>
 
@@ -1021,155 +993,6 @@ not of the required type.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-method-extra">
-    <span class="access" data-ice="access">public</span>
-    
-    
-    
-    
-    
-    <span data-ice="name">extra</span><span data-ice="signature">(extra: <span>any</span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber126">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>Extends Token instances generically.</p>
-</div>
-
-  
-
-  <div data-ice="properties"><div data-ice="properties">
-  <h4 data-ice="title">Params:</h4>
-  <table class="params">
-    <thead>
-    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
-    </thead>
-    <tbody>
-    
-    <tr data-ice="property" data-depth="0">
-      <td data-ice="name" data-depth="0">extra</td>
-      <td data-ice="type"><span>any</span></td>
-      <td data-ice="appendix"></td>
-      <td data-ice="description"><p>The object to be <code>Object.assign(...)</code>&apos;d to tokens in general.</p>
-</td>
-    </tr>
-</tbody>
-  </table>
-</div>
-</div>
-
-  <div class="return-params" data-ice="returnParams">
-    <h4>Return:</h4>
-    <table>
-      <tbody>
-        <tr>
-          <td class="return-type" data-ice="returnType"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></td>
-          <td class="return-desc" data-ice="returnDescription"><p>Returns the Lexer instance.</p>
-</td>
-        </tr>
-      </tbody>
-    </table>
-    <div data-ice="returnProperties">
-</div>
-  </div>
-
-  
-
-  
-
-  
-
-  
-
-  <div data-ice="example">
-    <h4>Example:</h4>
-    
-  <div class="example-doc" data-ice="exampleDoc">
-      
-      <pre class="prettyprint source-code"><code data-ice="exampleCode">const lex = perplex(s)
-  .extra({
-    myMethod() {
-      console.log(&apos;My custom method&apos;)
-    }
-  })
-lex.next().myMethod() // prints &apos;My custom method&apos;</code></pre>
-    </div>
-</div>
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-method-insert">
-    <span class="access" data-ice="access">public</span>
-    
-    
-    
-    
-    
-    <span data-ice="name">insert</span><span data-ice="signature">(token: <span><a href="class/lib/token.js~Token.html">Token</a></span> | <span>any</span>)</span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber135">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>Inserts a transient token into the token stream that will be returned
-the next time <span><a href="class/lib/lexer.js~Lexer.html#instance-method-next">next</a></span> is called.</p>
-</div>
-
-  
-
-  <div data-ice="properties"><div data-ice="properties">
-  <h4 data-ice="title">Params:</h4>
-  <table class="params">
-    <thead>
-    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
-    </thead>
-    <tbody>
-    
-    <tr data-ice="property" data-depth="0">
-      <td data-ice="name" data-depth="0">token</td>
-      <td data-ice="type"><span><a href="class/lib/token.js~Token.html">Token</a></span> | <span>any</span></td>
-      <td data-ice="appendix"></td>
-      <td data-ice="description"><p>The token to insert.</p>
-</td>
-    </tr>
-</tbody>
-  </table>
-</div>
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
   <h3 data-ice="anchor" id="instance-method-next">
     <span class="access" data-ice="access">public</span>
     
@@ -1181,7 +1004,7 @@ the next time <span><a href="class/lib/lexer.js~Lexer.html#instance-method-next"
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber148">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber115">source</a></span></span>
     </span>
   </h3>
 
@@ -1238,7 +1061,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber168">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber135">source</a></span></span>
     </span>
   </h3>
 
@@ -1303,25 +1126,25 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-method-remaining">
+  <h3 data-ice="anchor" id="instance-method-pop">
     <span class="access" data-ice="access">public</span>
     
     
     
     
     
-    <span data-ice="name">remaining</span><span data-ice="signature">(): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></span>
+    <span data-ice="name">pop</span><span data-ice="signature">()</span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber211">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber178">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Returns the remaining (un-lexed) source string</p>
+  <div data-ice="description"><p>Pops the sub-lexer and returns lexing-control to <code>this</code></p>
 </div>
 
   
@@ -1329,13 +1152,75 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
   <div data-ice="properties">
 </div>
 
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-method-push">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span data-ice="name">push</span><span data-ice="signature">(lexer: <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber189">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Sets a sub-lexer that will operate on the source stream instead of <code>this</code>.</p>
+</div>
+
+  
+
+  <div data-ice="properties"><div data-ice="properties">
+  <h4 data-ice="title">Params:</h4>
+  <table class="params">
+    <thead>
+    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+    
+    <tr data-ice="property" data-depth="0">
+      <td data-ice="name" data-depth="0">lexer</td>
+      <td data-ice="type"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"><p>The sub-lexer to set</p>
+</td>
+    </tr>
+</tbody>
+  </table>
+</div>
+</div>
+
   <div class="return-params" data-ice="returnParams">
     <h4>Return:</h4>
     <table>
       <tbody>
         <tr>
-          <td class="return-type" data-ice="returnType"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></td>
-          
+          <td class="return-type" data-ice="returnType"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></td>
+          <td class="return-desc" data-ice="returnDescription"><p>Returns <code>this</code></p>
+</td>
         </tr>
       </tbody>
     </table>
@@ -1370,7 +1255,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber219">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber204">source</a></span></span>
     </span>
   </h3>
 
@@ -1439,11 +1324,11 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     
     
     
-    <span data-ice="name">token</span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, regex: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp">RegExp</a></span>, extra: <span>any</span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+    <span data-ice="name">token</span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, regex: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp">RegExp</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber238">source</a></span></span>
+      <span data-ice="source"><span><a href="file/lib/lexer.js.html#lineNumber222">source</a></span></span>
     </span>
   </h3>
 
@@ -1475,13 +1360,6 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
       <td data-ice="type"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp">RegExp</a></span></td>
       <td data-ice="appendix"></td>
       <td data-ice="description"><p>The regular expression that will match this token.</p>
-</td>
-    </tr>
-<tr data-ice="property" data-depth="0">
-      <td data-ice="name" data-depth="0">extra</td>
-      <td data-ice="type"><span>any</span></td>
-      <td data-ice="appendix"><ul><li>optional</li></ul></td>
-      <td data-ice="description"><p>Token-specific extras (will become instance methods/properties on this token type)</p>
 </td>
     </tr>
 </tbody>

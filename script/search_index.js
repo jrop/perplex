@@ -372,18 +372,6 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
-    "lib/lexer.js~lexer#extra",
-    "class/lib/lexer.js~Lexer.html#instance-method-extra",
-    "lib/lexer.js~Lexer#extra",
-    "method"
-  ],
-  [
-    "lib/lexer.js~lexer#insert",
-    "class/lib/lexer.js~Lexer.html#instance-method-insert",
-    "lib/lexer.js~Lexer#insert",
-    "method"
-  ],
-  [
     "lib/lexer.js~lexer#next",
     "class/lib/lexer.js~Lexer.html#instance-method-next",
     "lib/lexer.js~Lexer#next",
@@ -393,6 +381,12 @@ window.esdocSearchIndex = [
     "lib/lexer.js~lexer#peek",
     "class/lib/lexer.js~Lexer.html#instance-method-peek",
     "lib/lexer.js~Lexer#peek",
+    "method"
+  ],
+  [
+    "lib/lexer.js~lexer#pop",
+    "class/lib/lexer.js~Lexer.html#instance-method-pop",
+    "lib/lexer.js~Lexer#pop",
     "method"
   ],
   [
@@ -408,20 +402,20 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "lib/lexer.js~lexer#remaining",
-    "class/lib/lexer.js~Lexer.html#instance-method-remaining",
-    "lib/lexer.js~Lexer#remaining",
+    "lib/lexer.js~lexer#push",
+    "class/lib/lexer.js~Lexer.html#instance-method-push",
+    "lib/lexer.js~Lexer#push",
     "method"
   ],
   [
     "lib/lexer.js~lexer#source",
-    "class/lib/lexer.js~Lexer.html#instance-get-source",
+    "class/lib/lexer.js~Lexer.html#instance-set-source",
     "lib/lexer.js~Lexer#source",
     "member"
   ],
   [
     "lib/lexer.js~lexer#source",
-    "class/lib/lexer.js~Lexer.html#instance-set-source",
+    "class/lib/lexer.js~Lexer.html#instance-get-source",
     "lib/lexer.js~Lexer#source",
     "member"
   ],
