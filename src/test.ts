@@ -63,16 +63,18 @@ describe('lexer', function () {
 
 	it('.push()/.pop()', function () {
 		const source = 'abc123def'
-		const lexer = new Lexer().token('ID', /[a-z]+/)
+		const lexer = new Lexer()
+			.token('ABC', 'abc')
+			.token('DEF', 'def')
 
 		lexer.source = source
-		assert.equal(lexer.expect('ID').match, 'abc')
+		assert.equal(lexer.expect('ABC').match, 'abc')
 
 		lexer.push(new Lexer().token('NUM', /[0-9]+/))
 		assert.equal(lexer.expect('NUM').match, '123')
 
 		lexer.pop()
-		assert.equal(lexer.expect('ID').match, 'def')
+		assert.equal(lexer.expect('DEF').match, 'def')
 	})
 
 	it('.source (get)', function () {

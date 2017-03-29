@@ -1,6 +1,13 @@
 import Token from './token'
 
-function normalize(regex: RegExp): RegExp {
+// Thank you, http://stackoverflow.com/a/6969486
+function toRegExp(str: string): RegExp {
+	return new RegExp(str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&'))
+}
+
+function normalize(regex: RegExp|string): RegExp {
+	if (typeof regex === 'string')
+		regex = toRegExp(regex)
 	if (!regex.source.startsWith('^'))
 		return new RegExp(`^${regex.source}`, regex.flags)
 	else
@@ -249,16 +256,19 @@ class Lexer {
 	/**
 	 * Defines a token-type. If the token `type` starts with `$SKIP`, then those tokens will be skipped.
 	 * @param {string} type The name of this token-type.
-	 * @param {RegExp} regex The regular expression that will match this token.
+	 * @param {RegExp|string} regex The regular expression that will match this token.
 	 * @return {Lexer}
 	 * @example
 	 * const lex = perplex('...')
 	 *   .token('ID', /(([$_a-z]+[$_a-z0-9]*)/i)
 	 *   .token('$SKIP_WS', /\s+/i)
 	 */
-	token(type: string, regex: RegExp): Lexer {
-		regex = normalize(regex)
-		this._tokenTypes.push({type, regex, enabled: true})
+	token(type: string, pattern: RegExp|string): Lexer {
+		this._tokenTypes.push({
+			type,
+			regex: normalize(pattern),
+			enabled: true,
+		})
 		return this
 	}
 }
