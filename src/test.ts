@@ -4,6 +4,7 @@ import Lexer from './lexer'
 
 const lex = new Lexer('')
 	.extra({extra: true})
+	.token('WS', /\s+/).disable('WS')
 	.token('NUMBER', /\d+/)
 	.token('$SKIP_SINGLE_LINE_COMMENT', /\/\/[^\n]*/)
 	.token('$SKIP_WHITESPACE', /^\s+/)
@@ -111,6 +112,13 @@ describe('lexer', function () {
 		lex.next() // 4
 		lex.position = 0
 		assert.equal(lex.next().match.trim(), '4')
+	})
+
+	it('enable/disable token types', function () {
+		assert.equal(lex.enable('WS').next().match, '  ')
+		assert.equal(lex.next().match, '4')
+		lex.disable('WS')
+		assert.equal(lex.next().match, '5')
 	})
 
 	it('unexpected input', function () {

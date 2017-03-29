@@ -16,14 +16,14 @@ function normalize(regex: RegExp): RegExp {
 
 /**
  * Lexes a source-string into tokens.
- * 
+ *
  * @example
  * const lex = perplex('...')
  *   .token('ID', /my-id-regex/)
  *   .token('(', /\(/)
  *   .token(')', /\)/)
  *   .token('$SKIP_WS', /\s+/)
- * 
+ *
  * while ((let t = lex.next()).type != '$EOF') {
  *   console.log(t)
  * }
@@ -36,6 +36,7 @@ class Lexer {
 		type: string,
 		regex: RegExp,
 		extra: any,
+		enabled: boolean,
 	}[]
 	private _inserted: Token[]
 	private _defaultExtra: any
@@ -100,6 +101,28 @@ class Lexer {
 	 */
 	set position(pos: number) {
 		this._position = pos
+	}
+
+	/**
+	 * Disables the specified token-type
+	 * @param {string} type The token type to disable
+	 * @returns {Lexer}
+	 */
+	disable(type: string): Lexer {
+		return this.enable(type, false)
+	}
+
+	/**
+	 * Enables/disables the specified token-type
+	 * @param {string} type The token type to enable/disable
+	 * @param {boolean} [enabled=true] Whether to enable/disable the token type
+	 * @returns {Lexer}
+	 */
+	enable(type: string, enabled: boolean = true): Lexer {
+		this._tokenTypes
+			.filter(t => t.type == type)
+			.forEach(t => t.enabled = enabled)
+		return this
 	}
 
 	/**
@@ -174,10 +197,10 @@ class Lexer {
 	 * @param {number} [position=`this.position`] The position at which to start reading
 	 * @return {Token}
 	 */
-	peek(position:number = this.position): Token {
+	peek(position: number = this.position): Token {
 		// first check if we have any feaux tokens to deliver:
 		if (this._inserted.length > 0)
-			return Object.assign(this._inserted.pop())
+			return this._inserted.pop()
 
 		if (position >= this._source.length)
 			return new Token('$EOF', '', [], position, position, this, this._defaultExtra)
@@ -185,7 +208,7 @@ class Lexer {
 		let t
 		do {
 			t = null
-			for (const tokenType of this._tokenTypes) {
+			for (const tokenType of this._tokenTypes.filter(t => t.enabled)) {
 				const { match, groups } = this._peekRegex(tokenType.regex, position)
 				if (match) {
 					const start = position
@@ -257,7 +280,7 @@ class Lexer {
 	 */
 	token(type: string, regex: RegExp, extra: any = null): Lexer {
 		regex = normalize(regex)
-		this._tokenTypes.push({type, regex, extra})
+		this._tokenTypes.push({type, regex, extra, enabled: true})
 		return this
 	}
 }
