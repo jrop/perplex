@@ -52,7 +52,7 @@ yarn add perplex</code>
 
 const lexer = perplex(&apos;  4 5 6  &apos;)
     .token(&apos;NUMBER&apos;, /\d+/)
-    .token(&apos;$SKIP_WHITESPACE&apos;, /\s+/)
+    .token(&apos;WHITESPACE&apos;, /\s+/, true) // true means &apos;skip&apos;
 
 lexer.next() // Token {type: &apos;NUMBER&apos;, match: &apos;4&apos;, groups: [&apos;4&apos;], start: 2, end: 3}</code>
 </code></pre>
