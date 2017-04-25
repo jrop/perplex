@@ -1,0 +1,67 @@
+// Thank you, http://stackoverflow.com/a/6969486
+function toRegExp(str: string): RegExp {
+	return new RegExp(str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&'))
+}
+
+function normalize(regex: RegExp|string): RegExp {
+	if (typeof regex === 'string')
+		regex = toRegExp(regex)
+	if (!regex.source.startsWith('^'))
+		return new RegExp(`^${regex.source}`, regex.flags)
+	else
+		return regex
+}
+
+function first<T, U>(arr: T[], predicate: (item: T, i: number) => U): {item: T, result: U} {
+	let i = 0
+	for (const item of arr) {
+		const result = predicate(item, i++)
+		if (result)
+			return {item, result}
+	}
+}
+
+/**
+ * @private
+ */
+export default class TokenTypes {
+	public tokenTypes: {
+		type: string,
+		regex: RegExp,
+		enabled: boolean,
+		skip: boolean,
+	}[]
+
+	constructor() {
+		this.tokenTypes = []
+	}
+
+	disable(type: string): TokenTypes {
+		return this.enable(type, false)
+	}
+
+	enable(type: string, enabled: boolean = true): TokenTypes {
+		this.tokenTypes
+			.filter(t => t.type == type)
+			.forEach(t => t.enabled = enabled)
+		return this
+	}
+
+	peek(source: string, position: number) {
+		const s = source.substr(position)
+		return first(this.tokenTypes.filter(tt => tt.enabled), tt => {
+			tt.regex.lastIndex = 0
+			return tt.regex.exec(s)
+		})
+	}
+
+	token(type: string, pattern: RegExp|string, skip: boolean = false): TokenTypes {
+		this.tokenTypes.push({
+			type,
+			regex: normalize(pattern),
+			enabled: true,
+			skip,
+		})
+		return this
+	}
+}

@@ -84,3 +84,8 @@ class Token {
 }
 
 export default Token
+
+/**
+ * @private
+ */
+export const EOF = (lexer: Lexer) => new Token('EOF', '(eof)', [], lexer.source.length, lexer.source.length, lexer)

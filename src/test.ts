@@ -1,12 +1,17 @@
 import * as assert from 'assert'
 import * as except from 'except'
 import Lexer from './lexer'
+import Token from './token'
+
+function clean(t: Token) {
+	return except(t, 'lexer', 'strpos')
+}
 
 const lex = new Lexer()
 	.token('WS', /\s+/).disable('WS')
 	.token('NUMBER', /\d+/)
-	.token('$SKIP_SINGLE_LINE_COMMENT', /\/\/[^\n]*/)
-	.token('$SKIP_WHITESPACE', /^\s+/)
+	.token('SINGLE_LINE_COMMENT', /\/\/[^\n]*/, true)
+	.token('WHITESPACE', /^\s+/, true)
 
 describe('lexer', function () {
 	beforeEach(function () {
@@ -35,48 +40,6 @@ describe('lexer', function () {
 		end: 7,
 	}
 
-	it('.peek()', function () {
-		assert.deepEqual(except(lex.peek(), 'lexer', 'strpos'), FOUR)
-
-		lex.next()
-		assert.deepEqual(except(lex.peek(), 'lexer', 'strpos'), FIVE)
-		assert.deepEqual(except(lex.peek(), 'lexer', 'strpos'), FIVE)
-	})
-
-	it('.next()', function () {
-		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), FOUR)
-		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), FIVE)
-		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), SIX)
-		assert.deepEqual(except(lex.next(), 'lexer', 'strpos'), {
-			type: '$EOF',
-			match: '(eof)',
-			groups: [],
-			start: 9,
-			end: 9,
-		})
-	})
-
-	it('.expect()', function () {
-		assert(lex.expect('NUMBER').match.trim(), '4')
-		assert.throws(() => lex.expect('NOPE'))
-	})
-
-	it('.push()/.pop()', function () {
-		const source = 'abc123def'
-		const lexer = new Lexer()
-			.token('ABC', 'abc')
-			.token('DEF', 'def')
-
-		lexer.source = source
-		assert.equal(lexer.expect('ABC').match, 'abc')
-
-		lexer.push(new Lexer().token('NUM', /[0-9]+/))
-		assert.equal(lexer.expect('NUM').match, '123')
-
-		lexer.pop()
-		assert.equal(lexer.expect('DEF').match, 'def')
-	})
-
 	it('.source (get)', function () {
 		lex.next() // 4
 		assert.equal(lex.source.replace(/\s+/g, ''), '456')
@@ -91,6 +54,53 @@ describe('lexer', function () {
 		lex.next() // 4
 		lex.position = 0
 		assert.equal(lex.next().match.trim(), '4')
+	})
+
+	it('.peek()', function () {
+		assert.deepEqual(clean(lex.peek()), FOUR)
+
+		lex.next()
+		assert.deepEqual(clean(lex.peek()), FIVE)
+		assert.deepEqual(clean(lex.peek()), FIVE)
+	})
+
+	it('.next()', function () {
+		assert.deepEqual(clean(lex.next()), FOUR)
+		assert.deepEqual(clean(lex.next()), FIVE)
+		assert.deepEqual(clean(lex.next()), SIX)
+		assert.deepEqual(clean(lex.next()), {
+			type: 'EOF',
+			match: '(eof)',
+			groups: [],
+			start: 9,
+			end: 9,
+		})
+	})
+
+	it('.expect()', function () {
+		assert(lex.expect('NUMBER').match.trim(), '4')
+		assert.throws(() => lex.expect('NOPE'))
+	})
+
+	it('.toArray()', function () {
+		lex.next() // make sure toArray starts from the beginning
+		assert.deepEqual(lex.toArray().map(t => clean(t)), [FOUR, FIVE, SIX])
+		// make sure the original state is left intact:
+		assert.deepEqual(clean(lex.peek()), FIVE)
+	})
+
+	it('.attach()', function () {
+		const lex2 = new Lexer()
+			.token('ALL', /.*/)
+		lex2.attachTo(lex)
+
+		lex.next() // eat 4
+		assert.deepEqual(clean(lex2.peek()), {
+			type: 'ALL',
+			match: ' 5 6  ',
+			groups: [' 5 6  '],
+			start: 3, end: 9,
+		})
 	})
 
 	it('enable/disable token types', function () {

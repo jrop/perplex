@@ -14,14 +14,13 @@ yarn add perplex
 ## Use
 
 ```js
-'use strict'
 import perplex from 'perplex'
 
 const lexer = perplex('  4 5 6  ')
 	.token('NUMBER', /\d+/)
 	.token('$SKIP_WHITESPACE', /\s+/)
 
-lexer.next() // Token { type: 'NUMBER', match: '4', start: 2, end: 3 }
+lexer.next() // Token {type: 'NUMBER', match: '4', groups: ['4'], start: 2, end: 3}
 ```
 
 [See the documentation for more information, and supported instance methods, etc.](https://jrop.github.io/perplex/):

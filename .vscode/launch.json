@@ -10,7 +10,7 @@
 			"name": "lexer.js",
 			"program": "${workspaceRoot}/lib/lexer.js",
 			"outFiles": [],
-			"protocol": "auto"
+			"protocol": "inspector"
 		},
 		{
 			"type": "node",
