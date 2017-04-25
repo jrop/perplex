@@ -18,7 +18,7 @@ import perplex from 'perplex'
 
 const lexer = perplex('  4 5 6  ')
 	.token('NUMBER', /\d+/)
-	.token('$SKIP_WHITESPACE', /\s+/)
+	.token('WHITESPACE', /\s+/, true) // true means 'skip'
 
 lexer.next() // Token {type: 'NUMBER', match: '4', groups: ['4'], start: 2, end: 3}
 ```
