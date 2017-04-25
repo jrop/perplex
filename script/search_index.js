@@ -342,10 +342,22 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
+    "lib/lexer-state.js",
+    "file/lib/lexer-state.js.html",
+    "lib/lexer-state.js",
+    "file"
+  ],
+  [
     "lib/lexer.js",
     "file/lib/lexer.js.html",
     "lib/lexer.js",
     "file"
+  ],
+  [
+    "lib/lexer.js~lexer#attachto",
+    "class/lib/lexer.js~Lexer.html#instance-method-attachTo",
+    "lib/lexer.js~Lexer#attachTo",
+    "method"
   ],
   [
     "lib/lexer.js~lexer#constructor",
@@ -384,12 +396,6 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
-    "lib/lexer.js~lexer#pop",
-    "class/lib/lexer.js~Lexer.html#instance-method-pop",
-    "lib/lexer.js~Lexer#pop",
-    "method"
-  ],
-  [
     "lib/lexer.js~lexer#position",
     "class/lib/lexer.js~Lexer.html#instance-set-position",
     "lib/lexer.js~Lexer#position",
@@ -402,10 +408,10 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "lib/lexer.js~lexer#push",
-    "class/lib/lexer.js~Lexer.html#instance-method-push",
-    "lib/lexer.js~Lexer#push",
-    "method"
+    "lib/lexer.js~lexer#source",
+    "class/lib/lexer.js~Lexer.html#instance-get-source",
+    "lib/lexer.js~Lexer#source",
+    "member"
   ],
   [
     "lib/lexer.js~lexer#source",
@@ -414,15 +420,15 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "lib/lexer.js~lexer#source",
-    "class/lib/lexer.js~Lexer.html#instance-get-source",
-    "lib/lexer.js~Lexer#source",
-    "member"
-  ],
-  [
     "lib/lexer.js~lexer#strpos",
     "class/lib/lexer.js~Lexer.html#instance-method-strpos",
     "lib/lexer.js~Lexer#strpos",
+    "method"
+  ],
+  [
+    "lib/lexer.js~lexer#toarray",
+    "class/lib/lexer.js~Lexer.html#instance-method-toArray",
+    "lib/lexer.js~Lexer#toArray",
     "method"
   ],
   [
@@ -436,6 +442,12 @@ window.esdocSearchIndex = [
     "typedef/index.html#static-typedef-Position",
     "lib/lexer.js~Position",
     "typedef"
+  ],
+  [
+    "lib/token-types.js",
+    "file/lib/token-types.js.html",
+    "lib/token-types.js",
+    "file"
   ],
   [
     "lib/token.js",

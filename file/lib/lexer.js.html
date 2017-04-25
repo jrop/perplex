@@ -41,13 +41,9 @@
 </nav>
 
 <div class="content" data-ice="content"><h1 data-ice="title">lib/lexer.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import Token from &apos;./token&apos;;
-function normalize(regex) {
-    if (!regex.source.startsWith(&apos;^&apos;))
-        return new RegExp(`^${regex.source}`, regex.flags);
-    else
-        return regex;
-}
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import LexerState from &apos;./lexer-state&apos;;
+import Token, { EOF } from &apos;./token&apos;;
+import TokenTypes from &apos;./token-types&apos;;
 /**
  * @typedef {{
  *   line: number,
@@ -62,11 +58,13 @@ function normalize(regex) {
  *   .token(&apos;ID&apos;, /my-id-regex/)
  *   .token(&apos;(&apos;, /\(/)
  *   .token(&apos;)&apos;, /\)/)
- *   .token(&apos;$SKIP_WS&apos;, /\s+/)
+ *   .token(&apos;WS&apos;, /\s+/, true) // true means &apos;skip&apos;
  *
- * while ((let t = lex.next()).type != &apos;$EOF&apos;) {
+ * while ((let t = lex.next()).type != &apos;EOF&apos;) {
  *   console.log(t)
  * }
+ * // alternatively:
+ * console.log(lex.toArray())
  */
 class Lexer {
     /* tslint:enable */
@@ -75,65 +73,67 @@ class Lexer {
      * @param {string} [source = &apos;&apos;] The source string to operate on.
      */
     constructor(source = &apos;&apos;) {
-        this._source = source;
-        this._position = 0;
-        this._tokenTypes = [];
-        this._subLexer = null;
+        this._state = new LexerState(source);
+        this._tokenTypes = new TokenTypes();
     }
-    _peekRegex(r, position) {
-        r.lastIndex = 0;
-        const groups = r.exec(this._source.substring(position));
-        const sGroups = groups ? groups.map(x =&gt; x) : null; // only keep array elements (remove &quot;index&quot; and &quot;input&quot;)
-        const match = groups ? groups[0] : null;
-        return { match, groups: sGroups };
-    }
+    //
+    // Getters/Setters
+    //
     /**
-     * Gets the source being lexed
-     * @type {string}
-     */
-    get source() {
-        return this._source;
-    }
-    /**
-     * Sets the source being lexed
-     * @type {string}
-     */
-    set source(s) {
-        this._source = s;
-        this.position = 0;
-    }
-    /**
-     * Returns the lexer&apos;s position in the source string
-     * @type {number}
+     * Gets the current lexer position
+     * @return {number} Returns the position
      */
     get position() {
-        return this._position;
+        return this._state.position;
     }
     /**
-     * Sets the lexer&apos;s position in the source string
-     * @type {number}
+     * Sets the current lexer position
+     * @param {number} i The position to move to
      */
-    set position(pos) {
-        this._position = pos;
+    set position(i) {
+        this._state.position = i;
     }
     /**
-     * Disables the specified token-type
+     * Gets the source the lexer is operating on
+     * @return {string} Returns the source
+     */
+    get source() {
+        return this._state.source;
+    }
+    /**
+     * Sets the source the lexer is operating on
+     * @param {string} s The source to set
+     */
+    set source(s) {
+        this._state = new LexerState(s);
+    }
+    //
+    // METHODS
+    //
+    /**
+     * Attaches this lexer to another lexer&apos;s state
+     * @param {Lexer} other The other lexer to attach to
+     */
+    attachTo(other) {
+        this._state = other._state;
+    }
+    /**
+     * Disables a token type
      * @param {string} type The token type to disable
-     * @returns {Lexer}
+     * @return {Lexer}
      */
     disable(type) {
-        return this.enable(type, false);
+        this._tokenTypes.disable(type);
+        return this;
     }
     /**
-     * Enables/disables the specified token-type
-     * @param {string} type The token type to enable/disable
-     * @param {boolean} [enabled=true] Whether to enable/disable the token type
-     * @returns {Lexer}
+     * Enables a token type
+     * @param {string} type The token type to enalbe
+     * @param {?boolean} [enabled=true] Whether to enable/disable the specified token type
+     * @return {Lexer}
      */
-    enable(type, enabled = true) {
-        this._tokenTypes
-            .filter(t =&gt; t.type == type)
-            .forEach(t =&gt; t.enabled = enabled);
+    enable(type, enabled) {
+        this._tokenTypes.enable(type, enabled);
         return this;
     }
     /**
@@ -156,15 +156,13 @@ class Lexer {
      * @return {Token}
      */
     next() {
-        if (this._subLexer)
-            return this._subLexer.next();
         try {
             const t = this.peek();
-            this.position = t.end;
+            this._state.position = t.end;
             return t;
         }
         catch (e) {
-            this._position = e.end;
+            this._state.position = e.end;
             throw e;
         }
     }
@@ -175,69 +173,33 @@ class Lexer {
      * @param {number} [position=`this.position`] The position at which to start reading
      * @return {Token}
      */
-    peek(position = this.position) {
-        if (this._subLexer) {
-            console.log(&apos;SUB found!&apos;, this._subLexer);
-            return this._subLexer.peek(position);
+    peek(position = this._state.position) {
+        const read = (i = position) =&gt; {
+            if (i &gt;= this._state.source.length)
+                return EOF(this);
+            const n = this._tokenTypes.peek(this._state.source, i);
+            return n
+                ? (n.item.skip
+                    ? read(i + n.result[0].length)
+                    : new Token(n.item.type, n.result[0], n.result.map(x =&gt; x), i, i + n.result[0].length, this))
+                : null;
+        };
+        const t = read();
+        if (t)
+            return t;
+        // we did not find a match
+        let unexpected = this._state.source.substring(position, position + 1);
+        try {
+            this.peek(position + 1);
         }
-        if (position &gt;= this._source.length)
-            return new Token(&apos;$EOF&apos;, &apos;&apos;, [], position, position, this);
-        let t;
-        do {
-            t = null;
-            for (const tokenType of this._tokenTypes.filter(t =&gt; t.enabled)) {
-                const { match, groups } = this._peekRegex(tokenType.regex, position);
-                if (match) {
-                    const start = position;
-                    const end = position + match.length;
-                    t = new Token(tokenType.type, match, groups, start, end, this);
-                    position = end;
-                    break; // break out of for
-                }
-            }
-        } while (t &amp;&amp; t.type.startsWith(&apos;$SKIP&apos;));
-        if (!t &amp;&amp; position &gt;= this._source.length)
-            return new Token(&apos;$EOF&apos;, &apos;(eof)&apos;, [], position, position, this);
-        // did we find a match?
-        if (!t) {
-            let unexpected = this._source.substring(position, position + 1);
-            try {
-                this.peek(position + 1);
-            }
-            catch (e) {
-                unexpected += e.unexpected;
-            }
-            const { line, column } = this.strpos(position);
-            const e = new Error(`Unexpected token: ${unexpected} at (${line}:${column})`);
-            e.unexpected = unexpected;
-            e.end = position + unexpected.length;
-            throw e;
+        catch (e) {
+            unexpected += e.unexpected;
         }
-        return t;
-    }
-    /**
-     * Pops the sub-lexer and returns lexing-control to `this`
-     */
-    pop() {
-        if (!this._subLexer)
-            throw new Error(&apos;Sub-lexer is not set; cannot `pop(...)`&apos;);
-        this.position = this._subLexer.position;
-        this._subLexer = null;
-    }
-    /**
-     * Sets a sub-lexer that will operate on the source stream instead of `this`.
-     * @param {Lexer} lexer The sub-lexer to set
-     * @returns {Lexer} Returns `this`
-     */
-    push(lexer) {
-        if (this._subLexer)
-            throw new Error(&apos;Sub-lexer already set; cannot `push(...)`&apos;);
-        if (lexer === this || lexer._subLexer === this)
-            return this;
-        lexer.source = this.source;
-        lexer.position = this.position;
-        this._subLexer = lexer;
-        return this;
+        const { line, column } = this.strpos(position);
+        const e = new Error(`Unexpected input: ${unexpected} at (${line}:${column})`);
+        e.unexpected = unexpected;
+        e.end = position + unexpected.length;
+        throw e;
     }
     /**
      * Converts a string-index (relative to the source string) to a line and a column.
@@ -245,7 +207,7 @@ class Lexer {
      * @return {Position}
      */
     strpos(i) {
-        let lines = this._source.substring(0, i).split(/\r?\n/);
+        let lines = this._state.source.substring(0, i).split(/\r?\n/);
         if (!Array.isArray(lines))
             lines = [lines];
         const line = lines.length;
@@ -253,18 +215,28 @@ class Lexer {
         return { line, column };
     }
     /**
-     * Defines a token-type. If the token `type` starts with `$SKIP`, then those tokens will be skipped.
-     * @param {string} type The name of this token-type.
-     * @param {RegExp} regex The regular expression that will match this token.
-     * @return {Lexer}
-     * @example
-     * const lex = perplex(&apos;...&apos;)
-     *   .token(&apos;ID&apos;, /(([$_a-z]+[$_a-z0-9]*)/i)
-     *   .token(&apos;$SKIP_WS&apos;, /\s+/i)
+     * Converts the token stream to an array of Tokens
+     * @return {Token[]} The array of tokens (not including (EOF))
      */
-    token(type, regex) {
-        regex = normalize(regex);
-        this._tokenTypes.push({ type, regex, enabled: true });
+    toArray() {
+        const oldState = this._state.copy();
+        this._state.position = 0;
+        const tkns = [];
+        let t;
+        while ((t = this.next()).type != &apos;EOF&apos;)
+            tkns.push(t);
+        this._state = oldState;
+        return tkns;
+    }
+    /**
+     * Creates a new token type
+     * @param {string} type The token type
+     * @param {string|RegExp} pattern The pattern to match
+     * @param {?boolean} skip Whether this type of token should be skipped
+     * @return {Lexer}
+     */
+    token(type, pattern, skip) {
+        this._tokenTypes.token(type, pattern, skip);
         return this;
     }
 }

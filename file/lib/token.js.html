@@ -105,6 +105,10 @@ class Token {
     }
 }
 export default Token;
+/**
+ * @private
+ */
+export const EOF = (lexer) =&gt; new Token(&apos;EOF&apos;, &apos;(eof)&apos;, [], lexer.source.length, lexer.source.length, lexer);
 //# sourceMappingURL=token.js.map</code></pre>
 
 </div>

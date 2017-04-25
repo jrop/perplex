@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <base data-ice="baseUrl">
-  <title data-ice="title">API Document</title>
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">lib/token-types.js | API Document</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -40,33 +40,62 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><div data-ice="index" class="github-markdown"><h1 id="perplex">perplex</h1>
-<p>A simple lexer written entirely in JavaScript, with no dependencies!</p>
-<h2 id="installation">Installation</h2>
-<pre><code class="lang-sh"><code class="source-code prettyprint">npm install --save perplex
-# or
-yarn add perplex</code>
-</code></pre>
-<h2 id="use">Use</h2>
-<pre><code class="lang-js"><code class="source-code prettyprint">import perplex from &apos;perplex&apos;
+<div class="content" data-ice="content"><h1 data-ice="title">lib/token-types.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">// Thank you, http://stackoverflow.com/a/6969486
+function toRegExp(str) {
+    return new RegExp(str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, &apos;\\$&amp;&apos;));
+}
+function normalize(regex) {
+    if (typeof regex === &apos;string&apos;)
+        regex = toRegExp(regex);
+    if (!regex.source.startsWith(&apos;^&apos;))
+        return new RegExp(`^${regex.source}`, regex.flags);
+    else
+        return regex;
+}
+function first(arr, predicate) {
+    let i = 0;
+    for (const item of arr) {
+        const result = predicate(item, i++);
+        if (result)
+            return { item, result };
+    }
+}
+/**
+ * @private
+ */
+export default class TokenTypes {
+    constructor() {
+        this.tokenTypes = [];
+    }
+    disable(type) {
+        return this.enable(type, false);
+    }
+    enable(type, enabled = true) {
+        this.tokenTypes
+            .filter(t =&gt; t.type == type)
+            .forEach(t =&gt; t.enabled = enabled);
+        return this;
+    }
+    peek(source, position) {
+        const s = source.substr(position);
+        return first(this.tokenTypes.filter(tt =&gt; tt.enabled), tt =&gt; {
+            tt.regex.lastIndex = 0;
+            return tt.regex.exec(s);
+        });
+    }
+    token(type, pattern, skip = false) {
+        this.tokenTypes.push({
+            type,
+            regex: normalize(pattern),
+            enabled: true,
+            skip,
+        });
+        return this;
+    }
+}
+//# sourceMappingURL=token-types.js.map</code></pre>
 
-const lexer = perplex(&apos;  4 5 6  &apos;)
-    .token(&apos;NUMBER&apos;, /\d+/)
-    .token(&apos;$SKIP_WHITESPACE&apos;, /\s+/)
-
-lexer.next() // Token {type: &apos;NUMBER&apos;, match: &apos;4&apos;, groups: [&apos;4&apos;], start: 2, end: 3}</code>
-</code></pre>
-<p><a href="https://jrop.github.io/perplex/">See the documentation for more information, and supported instance methods, etc.</a>:</p>
-<ul>
-<li><a href="https://jrop.github.io/perplex/class/lib/lexer.js~Lexer.html">Lexer</a></li>
-<li><a href="https://jrop.github.io/perplex/class/lib/token.js~Token.html">Token</a></li>
-</ul>
-<h1 id="license">License</h1>
-<p>ISC License (ISC)
-Copyright (c) 2016, Jonathan Apodaca <a href="mailto:jrapodaca@gmail.com">jrapodaca@gmail.com</a></p>
-<p>Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.</p>
-<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot; AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.</p>
-</div>
 </div>
 
 <footer class="footer">
