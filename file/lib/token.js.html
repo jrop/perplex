@@ -33,6 +33,7 @@
   <ul>
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/token.js~EOFToken.html">EOFToken</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/token.js~Token.html">Token</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-Position">Position</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-TokenPosition">TokenPosition</a></span></span></li>
@@ -54,18 +55,18 @@ class Token {
     /* tslint:disable:indent */
     /**
      * Constructs a token
-     * @param {string} type The token type
+     * @param {T} type The token type
      * @param {string} match The string that the lexer consumed to create this token
      * @param {string[]} groups Any RegExp groups that accrued during the match
      * @param {number} start The string position where this match started
      * @param {number} end The string position where this match ends
-     * @param {Lexer} lexer The parent {@link Lexer}
+     * @param {Lexer&lt;T&gt;} lexer The parent {@link Lexer}
      */
     constructor(type, match, groups, start, end, lexer) {
         /* tslint:enable */
         /**
          * The token type
-         * @type {string}
+         * @type {T}
          */
         this.type = type;
         /**
@@ -90,7 +91,7 @@ class Token {
         this.end = end;
         /**
          * The parent {@link Lexer}
-         * @type {Lexer}
+         * @type {Lexer&lt;T&gt;}
          */
         this.lexer = lexer;
     }
@@ -103,12 +104,22 @@ class Token {
         const end = this.lexer.strpos(this.end);
         return { start, end };
     }
+    // tslint:disable-next-line prefer-function-over-method
+    isEof() { return false; }
 }
 export default Token;
+export class EOFToken extends Token {
+    constructor(lexer) {
+        const end = lexer.source.length;
+        super(null, &apos;(eof)&apos;, [], end, end, lexer);
+    }
+    // tslint:disable-next-line prefer-function-over-method
+    isEof() { return true; }
+}
 /**
  * @private
  */
-export const EOF = (lexer) =&gt; new Token(&apos;EOF&apos;, &apos;(eof)&apos;, [], lexer.source.length, lexer.source.length, lexer);
+export const EOF = (lexer) =&gt; new EOFToken(lexer);
 //# sourceMappingURL=token.js.map</code></pre>
 
 </div>

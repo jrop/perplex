@@ -1,5 +1,11 @@
 window.esdocSearchIndex = [
   [
+    "perplex/lib/token.js~eoftoken",
+    "class/lib/token.js~EOFToken.html",
+    "<span>EOFToken</span> <span class=\"search-result-import-path\">perplex/lib/token.js</span>",
+    "class"
+  ],
+  [
     "perplex/lib/lexer.js~lexer",
     "class/lib/lexer.js~Lexer.html",
     "<span>Lexer</span> <span class=\"search-result-import-path\">perplex/lib/lexer.js</span>",
@@ -409,13 +415,13 @@ window.esdocSearchIndex = [
   ],
   [
     "lib/lexer.js~lexer#source",
-    "class/lib/lexer.js~Lexer.html#instance-get-source",
+    "class/lib/lexer.js~Lexer.html#instance-set-source",
     "lib/lexer.js~Lexer#source",
     "member"
   ],
   [
     "lib/lexer.js~lexer#source",
-    "class/lib/lexer.js~Lexer.html#instance-set-source",
+    "class/lib/lexer.js~Lexer.html#instance-get-source",
     "lib/lexer.js~Lexer#source",
     "member"
   ],
@@ -456,6 +462,18 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
+    "lib/token.js~eoftoken#constructor",
+    "class/lib/token.js~EOFToken.html#instance-constructor-constructor",
+    "lib/token.js~EOFToken#constructor",
+    "method"
+  ],
+  [
+    "lib/token.js~eoftoken#iseof",
+    "class/lib/token.js~EOFToken.html#instance-method-isEof",
+    "lib/token.js~EOFToken#isEof",
+    "method"
+  ],
+  [
     "lib/token.js~token#constructor",
     "class/lib/token.js~Token.html#instance-constructor-constructor",
     "lib/token.js~Token#constructor",
@@ -472,6 +490,12 @@ window.esdocSearchIndex = [
     "class/lib/token.js~Token.html#instance-member-groups",
     "lib/token.js~Token#groups",
     "member"
+  ],
+  [
+    "lib/token.js~token#iseof",
+    "class/lib/token.js~Token.html#instance-method-isEof",
+    "lib/token.js~Token#isEof",
+    "method"
   ],
   [
     "lib/token.js~token#lexer",

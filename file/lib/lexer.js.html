@@ -33,6 +33,7 @@
   <ul>
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/token.js~EOFToken.html">EOFToken</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/token.js~Token.html">Token</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-Position">Position</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-TokenPosition">TokenPosition</a></span></span></li>
@@ -112,15 +113,15 @@ class Lexer {
     //
     /**
      * Attaches this lexer to another lexer&apos;s state
-     * @param {Lexer} other The other lexer to attach to
+     * @param {Lexer&lt;T&gt;} other The other lexer to attach to
      */
     attachTo(other) {
         this._state = other._state;
     }
     /**
      * Disables a token type
-     * @param {string} type The token type to disable
-     * @return {Lexer}
+     * @param {T} type The token type to disable
+     * @return {Lexer&lt;T&gt;}
      */
     disable(type) {
         this._tokenTypes.disable(type);
@@ -128,9 +129,9 @@ class Lexer {
     }
     /**
      * Enables a token type
-     * @param {string} type The token type to enalbe
+     * @param {T} type The token type to enalbe
      * @param {?boolean} [enabled=true] Whether to enable/disable the specified token type
-     * @return {Lexer}
+     * @return {Lexer&lt;T&gt;}
      */
     enable(type, enabled) {
         this._tokenTypes.enable(type, enabled);
@@ -139,8 +140,8 @@ class Lexer {
     /**
      * Like {@link next}, but throws an exception if the next token is
      * not of the required type.
-     * @param {string} type The token type expected from {@link next}
-     * @return {Token} Returns the {@link Token} on success
+     * @param {T} type The token type expected from {@link next}
+     * @return {Token&lt;T&gt;} Returns the {@link Token} on success
      */
     expect(type) {
         const t = this.next();
@@ -153,7 +154,7 @@ class Lexer {
     /**
      * Consumes and returns the next {@link Token} in the source string.
      * If there are no more tokens, it returns a {@link Token} of type `$EOF`
-     * @return {Token}
+     * @return {Token&lt;T&gt;}
      */
     next() {
         try {
@@ -171,7 +172,7 @@ class Lexer {
      * not consume it.
      * If there are no more tokens, it returns a {@link Token} of type `$EOF`
      * @param {number} [position=`this.position`] The position at which to start reading
-     * @return {Token}
+     * @return {Token&lt;T&gt;}
      */
     peek(position = this._state.position) {
         const read = (i = position) =&gt; {
@@ -216,24 +217,24 @@ class Lexer {
     }
     /**
      * Converts the token stream to an array of Tokens
-     * @return {Token[]} The array of tokens (not including (EOF))
+     * @return {Token&lt;T&gt;[]} The array of tokens (not including (EOF))
      */
     toArray() {
         const oldState = this._state.copy();
         this._state.position = 0;
         const tkns = [];
         let t;
-        while ((t = this.next()).type != &apos;EOF&apos;)
+        while (!(t = this.next()).isEof())
             tkns.push(t);
         this._state = oldState;
         return tkns;
     }
     /**
      * Creates a new token type
-     * @param {string} type The token type
+     * @param {T} type The token type
      * @param {string|RegExp} pattern The pattern to match
      * @param {?boolean} skip Whether this type of token should be skipped
-     * @return {Lexer}
+     * @return {Lexer&lt;T&gt;}
      */
     token(type, pattern, skip) {
         this._tokenTypes.token(type, pattern, skip);
@@ -241,6 +242,7 @@ class Lexer {
     }
 }
 export default Lexer;
+export { EOF, Token, TokenTypes, LexerState };
 //# sourceMappingURL=lexer.js.map</code></pre>
 
 </div>

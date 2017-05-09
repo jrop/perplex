@@ -33,6 +33,7 @@
   <ul>
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/token.js~EOFToken.html">EOFToken</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/lib/token.js~Token.html">Token</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-Position">Position</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-TokenPosition">TokenPosition</a></span></span></li>
@@ -270,7 +271,7 @@ console.log(lex.toArray())</code></pre>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-attachTo">attachTo</a></span></span><span data-ice="signature">(other: <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>)</span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-attachTo">attachTo</a></span></span><span data-ice="signature">(other: <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;)</span>
         </p>
       </div>
       <div>
@@ -298,7 +299,7 @@ console.log(lex.toArray())</code></pre>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-disable">disable</a></span></span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-disable">disable</a></span></span><span data-ice="signature">(type: <span>T</span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</span>
         </p>
       </div>
       <div>
@@ -326,7 +327,7 @@ console.log(lex.toArray())</code></pre>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-enable">enable</a></span></span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, enabled: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-enable">enable</a></span></span><span data-ice="signature">(type: <span>T</span>, enabled: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</span>
         </p>
       </div>
       <div>
@@ -354,7 +355,7 @@ console.log(lex.toArray())</code></pre>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-expect">expect</a></span></span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="class/lib/token.js~Token.html">Token</a></span></span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-expect">expect</a></span></span><span data-ice="signature">(type: <span>T</span>): <span><a href="class/lib/token.js~Token.html">Token</a></span>&lt;<span>T</span>&gt;</span>
         </p>
       </div>
       <div>
@@ -383,7 +384,7 @@ not of the required type.</p>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-next">next</a></span></span><span data-ice="signature">(): <span><a href="class/lib/token.js~Token.html">Token</a></span></span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-next">next</a></span></span><span data-ice="signature">(): <span><a href="class/lib/token.js~Token.html">Token</a></span>&lt;<span>T</span>&gt;</span>
         </p>
       </div>
       <div>
@@ -411,7 +412,7 @@ not of the required type.</p>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-peek">peek</a></span></span><span data-ice="signature">(position: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>): <span><a href="class/lib/token.js~Token.html">Token</a></span></span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-peek">peek</a></span></span><span data-ice="signature">(position: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>): <span><a href="class/lib/token.js~Token.html">Token</a></span>&lt;<span>T</span>&gt;</span>
         </p>
       </div>
       <div>
@@ -468,7 +469,7 @@ not consume it.</p>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-toArray">toArray</a></span></span><span data-ice="signature">(): <span><span><a href="class/lib/token.js~Token.html">Token</a></span><span>[]</span></span></span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-toArray">toArray</a></span></span><span data-ice="signature">(): <span><span>Token&lt;T&gt;</span><span>[]</span></span></span>
         </p>
       </div>
       <div>
@@ -496,7 +497,7 @@ not consume it.</p>
         <p>
           
           
-          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-token">token</a></span></span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, pattern: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span> | <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp">RegExp</a></span>, skip: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+          <span data-ice="name"><span><a href="class/lib/lexer.js~Lexer.html#instance-method-token">token</a></span></span><span data-ice="signature">(type: <span>T</span>, pattern: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span> | <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp">RegExp</a></span>, skip: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</span>
         </p>
       </div>
       <div>
@@ -799,7 +800,7 @@ not consume it.</p>
     
     
     
-    <span data-ice="name">attachTo</span><span data-ice="signature">(other: <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>)</span>
+    <span data-ice="name">attachTo</span><span data-ice="signature">(other: <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;)</span>
     <span class="right-info">
       
       
@@ -825,7 +826,7 @@ not consume it.</p>
     
     <tr data-ice="property" data-depth="0">
       <td data-ice="name" data-depth="0">other</td>
-      <td data-ice="type"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></td>
+      <td data-ice="type"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</td>
       <td data-ice="appendix"></td>
       <td data-ice="description"><p>The other lexer to attach to</p>
 </td>
@@ -860,7 +861,7 @@ not consume it.</p>
     
     
     
-    <span data-ice="name">disable</span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+    <span data-ice="name">disable</span><span data-ice="signature">(type: <span>T</span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</span>
     <span class="right-info">
       
       
@@ -886,7 +887,7 @@ not consume it.</p>
     
     <tr data-ice="property" data-depth="0">
       <td data-ice="name" data-depth="0">type</td>
-      <td data-ice="type"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></td>
+      <td data-ice="type"><span>T</span></td>
       <td data-ice="appendix"></td>
       <td data-ice="description"><p>The token type to disable</p>
 </td>
@@ -901,7 +902,7 @@ not consume it.</p>
     <table>
       <tbody>
         <tr>
-          <td class="return-type" data-ice="returnType"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></td>
+          <td class="return-type" data-ice="returnType"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</td>
           
         </tr>
       </tbody>
@@ -933,7 +934,7 @@ not consume it.</p>
     
     
     
-    <span data-ice="name">enable</span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, enabled: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+    <span data-ice="name">enable</span><span data-ice="signature">(type: <span>T</span>, enabled: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</span>
     <span class="right-info">
       
       
@@ -959,7 +960,7 @@ not consume it.</p>
     
     <tr data-ice="property" data-depth="0">
       <td data-ice="name" data-depth="0">type</td>
-      <td data-ice="type"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></td>
+      <td data-ice="type"><span>T</span></td>
       <td data-ice="appendix"></td>
       <td data-ice="description"><p>The token type to enalbe</p>
 </td>
@@ -983,7 +984,7 @@ not consume it.</p>
     <table>
       <tbody>
         <tr>
-          <td class="return-type" data-ice="returnType"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></td>
+          <td class="return-type" data-ice="returnType"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</td>
           
         </tr>
       </tbody>
@@ -1015,7 +1016,7 @@ not consume it.</p>
     
     
     
-    <span data-ice="name">expect</span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="class/lib/token.js~Token.html">Token</a></span></span>
+    <span data-ice="name">expect</span><span data-ice="signature">(type: <span>T</span>): <span><a href="class/lib/token.js~Token.html">Token</a></span>&lt;<span>T</span>&gt;</span>
     <span class="right-info">
       
       
@@ -1042,7 +1043,7 @@ not of the required type.</p>
     
     <tr data-ice="property" data-depth="0">
       <td data-ice="name" data-depth="0">type</td>
-      <td data-ice="type"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></td>
+      <td data-ice="type"><span>T</span></td>
       <td data-ice="appendix"></td>
       <td data-ice="description"><p>The token type expected from <span><a href="class/lib/lexer.js~Lexer.html#instance-method-next">next</a></span></p>
 </td>
@@ -1057,7 +1058,7 @@ not of the required type.</p>
     <table>
       <tbody>
         <tr>
-          <td class="return-type" data-ice="returnType"><span><a href="class/lib/token.js~Token.html">Token</a></span></td>
+          <td class="return-type" data-ice="returnType"><span><a href="class/lib/token.js~Token.html">Token</a></span>&lt;<span>T</span>&gt;</td>
           <td class="return-desc" data-ice="returnDescription"><p>Returns the <span><a href="class/lib/token.js~Token.html">Token</a></span> on success</p>
 </td>
         </tr>
@@ -1090,7 +1091,7 @@ not of the required type.</p>
     
     
     
-    <span data-ice="name">next</span><span data-ice="signature">(): <span><a href="class/lib/token.js~Token.html">Token</a></span></span>
+    <span data-ice="name">next</span><span data-ice="signature">(): <span><a href="class/lib/token.js~Token.html">Token</a></span>&lt;<span>T</span>&gt;</span>
     <span class="right-info">
       
       
@@ -1115,7 +1116,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     <table>
       <tbody>
         <tr>
-          <td class="return-type" data-ice="returnType"><span><a href="class/lib/token.js~Token.html">Token</a></span></td>
+          <td class="return-type" data-ice="returnType"><span><a href="class/lib/token.js~Token.html">Token</a></span>&lt;<span>T</span>&gt;</td>
           
         </tr>
       </tbody>
@@ -1147,7 +1148,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     
     
     
-    <span data-ice="name">peek</span><span data-ice="signature">(position: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>): <span><a href="class/lib/token.js~Token.html">Token</a></span></span>
+    <span data-ice="name">peek</span><span data-ice="signature">(position: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>): <span><a href="class/lib/token.js~Token.html">Token</a></span>&lt;<span>T</span>&gt;</span>
     <span class="right-info">
       
       
@@ -1191,7 +1192,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     <table>
       <tbody>
         <tr>
-          <td class="return-type" data-ice="returnType"><span><a href="class/lib/token.js~Token.html">Token</a></span></td>
+          <td class="return-type" data-ice="returnType"><span><a href="class/lib/token.js~Token.html">Token</a></span>&lt;<span>T</span>&gt;</td>
           
         </tr>
       </tbody>
@@ -1296,7 +1297,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     
     
     
-    <span data-ice="name">toArray</span><span data-ice="signature">(): <span><span><a href="class/lib/token.js~Token.html">Token</a></span><span>[]</span></span></span>
+    <span data-ice="name">toArray</span><span data-ice="signature">(): <span><span>Token&lt;T&gt;</span><span>[]</span></span></span>
     <span class="right-info">
       
       
@@ -1320,7 +1321,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     <table>
       <tbody>
         <tr>
-          <td class="return-type" data-ice="returnType"><span><span><a href="class/lib/token.js~Token.html">Token</a></span><span>[]</span></span></td>
+          <td class="return-type" data-ice="returnType"><span><span>Token&lt;T&gt;</span><span>[]</span></span></td>
           <td class="return-desc" data-ice="returnDescription"><p>The array of tokens (not including (EOF))</p>
 </td>
         </tr>
@@ -1353,7 +1354,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     
     
     
-    <span data-ice="name">token</span><span data-ice="signature">(type: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, pattern: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span> | <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp">RegExp</a></span>, skip: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></span>
+    <span data-ice="name">token</span><span data-ice="signature">(type: <span>T</span>, pattern: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span> | <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp">RegExp</a></span>, skip: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></span>): <span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</span>
     <span class="right-info">
       
       
@@ -1379,7 +1380,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     
     <tr data-ice="property" data-depth="0">
       <td data-ice="name" data-depth="0">type</td>
-      <td data-ice="type"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></td>
+      <td data-ice="type"><span>T</span></td>
       <td data-ice="appendix"></td>
       <td data-ice="description"><p>The token type</p>
 </td>
@@ -1408,7 +1409,7 @@ If there are no more tokens, it returns a <span><a href="class/lib/token.js~Toke
     <table>
       <tbody>
         <tr>
-          <td class="return-type" data-ice="returnType"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span></td>
+          <td class="return-type" data-ice="returnType"><span><a href="class/lib/lexer.js~Lexer.html">Lexer</a></span>&lt;<span>T</span>&gt;</td>
           
         </tr>
       </tbody>
