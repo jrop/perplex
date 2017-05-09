@@ -25,10 +25,10 @@ import TokenTypes from './token-types'
  * // alternatively:
  * console.log(lex.toArray())
  */
-class Lexer {
+class Lexer<T> {
 	/* tslint:disable:variable-name */
-	private _state: LexerState
-	private _tokenTypes: TokenTypes
+	private _state: LexerState<T>
+	private _tokenTypes: TokenTypes<T>
 	/* tslint:enable */
 
 	/**
@@ -36,8 +36,8 @@ class Lexer {
 	 * @param {string} [source = ''] The source string to operate on.
 	 */
 	constructor(source: string = '') {
-		this._state = new LexerState(source)
-		this._tokenTypes = new TokenTypes()
+		this._state = new LexerState<T>(source)
+		this._tokenTypes = new TokenTypes<T>()
 	}
 
 	//
@@ -73,7 +73,7 @@ class Lexer {
 	 * @param {string} s The source to set
 	 */
 	set source(s: string) {
-		this._state = new LexerState(s)
+		this._state = new LexerState<T>(s)
 	}
 
 	//
@@ -82,29 +82,29 @@ class Lexer {
 
 	/**
 	 * Attaches this lexer to another lexer's state
-	 * @param {Lexer} other The other lexer to attach to
+	 * @param {Lexer<T>} other The other lexer to attach to
 	 */
-	attachTo(other: Lexer) {
+	attachTo(other: Lexer<T>) {
 		this._state = other._state
 	}
 
 	/**
 	 * Disables a token type
-	 * @param {string} type The token type to disable
-	 * @return {Lexer}
+	 * @param {T} type The token type to disable
+	 * @return {Lexer<T>}
 	 */
-	disable(type: string) {
+	disable(type: T) {
 		this._tokenTypes.disable(type)
 		return this
 	}
 
 	/**
 	 * Enables a token type
-	 * @param {string} type The token type to enalbe
+	 * @param {T} type The token type to enalbe
 	 * @param {?boolean} [enabled=true] Whether to enable/disable the specified token type
-	 * @return {Lexer}
+	 * @return {Lexer<T>}
 	 */
-	enable(type: string, enabled?: boolean) {
+	enable(type: T, enabled?: boolean) {
 		this._tokenTypes.enable(type, enabled)
 		return this
 	}
@@ -112,10 +112,10 @@ class Lexer {
 	/**
 	 * Like {@link next}, but throws an exception if the next token is
 	 * not of the required type.
-	 * @param {string} type The token type expected from {@link next}
-	 * @return {Token} Returns the {@link Token} on success
+	 * @param {T} type The token type expected from {@link next}
+	 * @return {Token<T>} Returns the {@link Token} on success
 	 */
-	expect(type: string): Token {
+	expect(type: T): Token<T> {
 		const t = this.next()
 		if (t.type != type) {
 			const pos = t.strpos()
@@ -127,9 +127,9 @@ class Lexer {
 	/**
 	 * Consumes and returns the next {@link Token} in the source string.
 	 * If there are no more tokens, it returns a {@link Token} of type `$EOF`
-	 * @return {Token}
+	 * @return {Token<T>}
 	 */
-	next(): Token {
+	next(): Token<T> {
 		try {
 			const t = this.peek()
 			this._state.position = t.end
@@ -145,9 +145,9 @@ class Lexer {
 	 * not consume it.
 	 * If there are no more tokens, it returns a {@link Token} of type `$EOF`
 	 * @param {number} [position=`this.position`] The position at which to start reading
-	 * @return {Token}
+	 * @return {Token<T>}
 	 */
-	peek(position: number = this._state.position): Token {
+	peek(position: number = this._state.position): Token<T> {
 		const read = (i: number = position) => {
 			if (i >= this._state.source.length)
 				return EOF(this)
@@ -195,15 +195,15 @@ class Lexer {
 
 	/**
 	 * Converts the token stream to an array of Tokens
-	 * @return {Token[]} The array of tokens (not including (EOF))
+	 * @return {Token<T>[]} The array of tokens (not including (EOF))
 	 */
-	toArray(): Token[] {
+	toArray(): Token<T>[] {
 		const oldState = this._state.copy()
 		this._state.position = 0
 
-		const tkns: Token[] = []
+		const tkns: Token<T>[] = []
 		let t
-		while ((t = this.next()).type != 'EOF') // tslint:disable-line no-conditional-assignment
+		while (!(t = this.next()).isEof()) // tslint:disable-line no-conditional-assignment
 			tkns.push(t)
 
 		this._state = oldState
@@ -212,15 +212,16 @@ class Lexer {
 
 	/**
 	 * Creates a new token type
-	 * @param {string} type The token type
+	 * @param {T} type The token type
 	 * @param {string|RegExp} pattern The pattern to match
 	 * @param {?boolean} skip Whether this type of token should be skipped
-	 * @return {Lexer}
+	 * @return {Lexer<T>}
 	 */
-	token(type: string, pattern: string|RegExp, skip?: boolean) {
+	token(type: T, pattern: string|RegExp, skip?: boolean) {
 		this._tokenTypes.token(type, pattern, skip)
 		return this
 	}
 }
 
 export default Lexer
+export {EOF, Token, TokenTypes, LexerState}

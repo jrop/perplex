@@ -10,34 +10,34 @@ import Lexer from './lexer'
 /**
  * Represents a token instance
  */
-class Token {
-	type: string
+class Token<T> {
+	type: T
 	match: string
 	groups: string[]
 	start: number
 	end: number
-	lexer: Lexer
+	lexer: Lexer<T>
 
 	/* tslint:disable:indent */
 	/**
 	 * Constructs a token
-	 * @param {string} type The token type
+	 * @param {T} type The token type
 	 * @param {string} match The string that the lexer consumed to create this token
 	 * @param {string[]} groups Any RegExp groups that accrued during the match
 	 * @param {number} start The string position where this match started
 	 * @param {number} end The string position where this match ends
-	 * @param {Lexer} lexer The parent {@link Lexer}
+	 * @param {Lexer<T>} lexer The parent {@link Lexer}
 	 */
-	constructor(type: string,
+	constructor(type: T,
 	            match: string,
 	            groups: string[],
 	            start: number,
 	            end: number,
-	            lexer: Lexer) {
+	            lexer: Lexer<T>) {
 		/* tslint:enable */
 		/**
 		 * The token type
-		 * @type {string}
+		 * @type {T}
 		 */
 		this.type = type
 
@@ -67,7 +67,7 @@ class Token {
 
 		/**
 		 * The parent {@link Lexer}
-		 * @type {Lexer}
+		 * @type {Lexer<T>}
 		 */
 		this.lexer = lexer
 	}
@@ -81,11 +81,24 @@ class Token {
 		const end = this.lexer.strpos(this.end)
 		return {start, end}
 	}
+
+	// tslint:disable-next-line prefer-function-over-method
+	isEof() {return false}
 }
 
 export default Token
 
+export class EOFToken<T> extends Token<T> {
+	constructor(lexer: Lexer<T>) {
+		const end = lexer.source.length
+		super(null, '(eof)', [], end, end, lexer)
+	}
+
+	// tslint:disable-next-line prefer-function-over-method
+	isEof() {return true}
+}
+
 /**
  * @private
  */
-export const EOF = (lexer: Lexer) => new Token('EOF', '(eof)', [], lexer.source.length, lexer.source.length, lexer)
+export const EOF = (lexer: Lexer<any>) => new EOFToken(lexer)

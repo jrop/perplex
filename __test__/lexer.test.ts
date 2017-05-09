@@ -1,13 +1,13 @@
 import * as assert from 'assert'
 import * as except from 'except'
-import Lexer from './lexer'
-import Token from './token'
+import Lexer from '../src/lexer'
+import Token from '../src/token'
 
-function clean(t: Token) {
-	return except(t, 'lexer', 'strpos')
+function clean<T>(t: Token<T>) {
+	return except(t, 'lexer', 'strpos', 'isEof', 'constructor')
 }
 
-const lex = new Lexer()
+const lex = new Lexer<string>()
 	.token('WS', /\s+/).disable('WS')
 	.token('NUMBER', /\d+/)
 	.token('SINGLE_LINE_COMMENT', /\/\/[^\n]*/, true)
@@ -65,16 +65,18 @@ describe('lexer', function () {
 	})
 
 	it('.next()', function () {
+		assert(!lex.peek().isEof())
 		assert.deepEqual(clean(lex.next()), FOUR)
 		assert.deepEqual(clean(lex.next()), FIVE)
 		assert.deepEqual(clean(lex.next()), SIX)
 		assert.deepEqual(clean(lex.next()), {
-			type: 'EOF',
+			type: null,
 			match: '(eof)',
 			groups: [],
 			start: 9,
 			end: 9,
 		})
+		assert(lex.next().isEof())
 	})
 
 	it('.expect()', function () {

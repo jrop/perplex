@@ -24,9 +24,9 @@ function first<T, U>(arr: T[], predicate: (item: T, i: number) => U): {item: T, 
 /**
  * @private
  */
-export default class TokenTypes {
+export default class TokenTypes<T> {
 	public tokenTypes: {
-		type: string,
+		type: T,
 		regex: RegExp,
 		enabled: boolean,
 		skip: boolean,
@@ -36,11 +36,11 @@ export default class TokenTypes {
 		this.tokenTypes = []
 	}
 
-	disable(type: string): TokenTypes {
+	disable(type: T): TokenTypes<T> {
 		return this.enable(type, false)
 	}
 
-	enable(type: string, enabled: boolean = true): TokenTypes {
+	enable(type: T, enabled: boolean = true): TokenTypes<T> {
 		this.tokenTypes
 			.filter(t => t.type == type)
 			.forEach(t => t.enabled = enabled)
@@ -55,7 +55,7 @@ export default class TokenTypes {
 		})
 	}
 
-	token(type: string, pattern: RegExp|string, skip: boolean = false): TokenTypes {
+	token(type: T, pattern: RegExp|string, skip: boolean = false): TokenTypes<T> {
 		this.tokenTypes.push({
 			type,
 			regex: normalize(pattern),
