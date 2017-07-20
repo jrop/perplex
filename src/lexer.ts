@@ -125,6 +125,15 @@ class Lexer<T> {
 	}
 
 	/**
+	 * Looks up whether a token is enabled.
+	 * @param tokenType The token type to look up
+	 * @return {boolean} Returns whether the token is enabled
+	 */
+	isEnabled(tokenType: T) {
+		return this._tokenTypes.isEnabled(tokenType)
+	}
+
+	/**
 	 * Consumes and returns the next {@link Token} in the source string.
 	 * If there are no more tokens, it returns a {@link Token} of type `$EOF`
 	 * @return {Token<T>}

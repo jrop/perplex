@@ -47,6 +47,13 @@ export default class TokenTypes<T> {
 		return this
 	}
 
+	isEnabled(type: T) {
+		const ttypes = this.tokenTypes.filter(tt => tt.type == type)
+		if (ttypes.length == 0)
+			throw new Error(`Token of type ${type} does not exists`)
+		return ttypes[0].enabled
+	}
+
 	peek(source: string, position: number) {
 		const s = source.substr(position)
 		return first(this.tokenTypes.filter(tt => tt.enabled), tt => {
