@@ -1,13 +1,13 @@
 {
   "name": "perplex",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "",
   "main": "index.js",
   "scripts": {
     "doc": "tsc --target es2017 --module es2015 && esdoc lib/",
     "lint": "tslint --project tsconfig.json --type-check src/**/*",
     "lint:fix": "tslint --fix --project tsconfig.json --type-check src/**/*",
-    "prepublish": "npm test",
+    "prepublish": "tsc && npm test",
     "test": "tape -r 'ts-node/register' test/index.ts"
   },
   "keywords": [],
