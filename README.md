@@ -1,6 +1,8 @@
 perplex
 =======
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/jrop/perplex.svg)](https://greenkeeper.io/)
+
 A simple lexer written entirely in JavaScript, with no dependencies!
 
 ## Installation
