@@ -119,7 +119,15 @@ class Lexer<T> {
 		const t = this.next()
 		if (t.type != type) {
 			const pos = t.strpos()
-			throw new Error('Expected ' + type + (t ? ', got ' + t.type : '') + ' at ' + pos.start.line + ':' + pos.start.column)
+			throw new Error(
+				'Expected ' +
+					type +
+					(t ? ', got ' + t.type : '') +
+					' at ' +
+					pos.start.line +
+					':' +
+					pos.start.column
+			)
 		}
 		return t
 	}
@@ -158,13 +166,19 @@ class Lexer<T> {
 	 */
 	peek(position: number = this._state.position): Token<T> {
 		const read = (i: number = position) => {
-			if (i >= this._state.source.length)
-				return EOF(this)
+			if (i >= this._state.source.length) return EOF(this)
 			const n = this._tokenTypes.peek(this._state.source, i)
 			return n
-				? (n.item.skip
-						? read(i + n.result[0].length)
-						: new Token(n.item.type, n.result[0], n.result.map(x => x), i, i + n.result[0].length, this))
+				? n.item.skip
+					? read(i + n.result[0].length)
+					: new Token(
+							n.item.type,
+							n.result[0],
+							n.result.map(x => x),
+							i,
+							i + n.result[0].length,
+							this
+						)
 				: null
 		}
 		const t = read()
@@ -178,9 +192,11 @@ class Lexer<T> {
 			unexpected += e.unexpected
 		}
 		const {line, column} = this.strpos(position)
-		const e = new Error(`Unexpected input: ${unexpected} at (${line}:${column})`);
-		(e as any).unexpected = unexpected;
-		(e as any).end = position + unexpected.length
+		const e = new Error(
+			`Unexpected input: ${unexpected} at (${line}:${column})`
+		)
+		;(e as any).unexpected = unexpected
+		;(e as any).end = position + unexpected.length
 		throw e
 	}
 
@@ -189,13 +205,14 @@ class Lexer<T> {
 	 * @param {number} i The index to compute
 	 * @return {Position}
 	 */
-	strpos(i: number): {
-		line: number,
-		column: number,
+	strpos(
+		i: number
+	): {
+		line: number
+		column: number
 	} {
 		let lines = this._state.source.substring(0, i).split(/\r?\n/)
-		if (!Array.isArray(lines))
-			lines = [lines]
+		if (!Array.isArray(lines)) lines = [lines]
 
 		const line = lines.length
 		const column = lines[lines.length - 1].length + 1
@@ -212,7 +229,9 @@ class Lexer<T> {
 
 		const tkns: Token<T>[] = []
 		let t
-		while (!(t = this.next()).isEof()) // tslint:disable-line no-conditional-assignment
+		while (
+			!(t = this.next()).isEof() // tslint:disable-line no-conditional-assignment
+		)
 			tkns.push(t)
 
 		this._state = oldState
@@ -226,9 +245,26 @@ class Lexer<T> {
 	 * @param {?boolean} skip Whether this type of token should be skipped
 	 * @return {Lexer<T>}
 	 */
-	token(type: T, pattern: string|RegExp, skip?: boolean) {
+	token(type: T, pattern: string | RegExp, skip?: boolean) {
 		this._tokenTypes.token(type, pattern, skip)
 		return this
+	}
+
+	/**
+	 * Creates a keyword
+	 * @param kwd The keyword to add as a token
+	 */
+	keyword(kwd: T) {
+		return this.token(kwd, new RegExp(`${kwd}(?=\\W|$)`))
+	}
+
+	/**
+	 * Creates an operator
+	 * @param op The operator to add as a token
+	 */
+	operator(op: T) {
+		const sOp = new String(op).valueOf()
+		return this.token(op, sOp)
 	}
 }
 

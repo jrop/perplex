@@ -28,12 +28,14 @@ class Token<T> {
 	 * @param {number} end The string position where this match ends
 	 * @param {Lexer<T>} lexer The parent {@link Lexer}
 	 */
-	constructor(type: T,
-	            match: string,
-	            groups: string[],
-	            start: number,
-	            end: number,
-	            lexer: Lexer<T>) {
+	constructor(
+		type: T,
+		match: string,
+		groups: string[],
+		start: number,
+		end: number,
+		lexer: Lexer<T>
+	) {
 		/* tslint:enable */
 		/**
 		 * The token type
@@ -83,7 +85,9 @@ class Token<T> {
 	}
 
 	// tslint:disable-next-line prefer-function-over-method
-	isEof() {return false}
+	isEof() {
+		return false
+	}
 }
 
 export default Token
@@ -95,7 +99,9 @@ export class EOFToken<T> extends Token<T> {
 	}
 
 	// tslint:disable-next-line prefer-function-over-method
-	isEof() {return true}
+	isEof() {
+		return true
+	}
 }
 
 /**

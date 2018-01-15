@@ -3,21 +3,21 @@ function toRegExp(str: string): RegExp {
 	return new RegExp(str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&'))
 }
 
-function normalize(regex: RegExp|string): RegExp {
-	if (typeof regex === 'string')
-		regex = toRegExp(regex)
+function normalize(regex: RegExp | string): RegExp {
+	if (typeof regex === 'string') regex = toRegExp(regex)
 	if (!regex.source.startsWith('^'))
 		return new RegExp(`^${regex.source}`, regex.flags)
-	else
-		return regex
+	else return regex
 }
 
-function first<T, U>(arr: T[], predicate: (item: T, i: number) => U): {item: T, result: U} {
+function first<T, U>(
+	arr: T[],
+	predicate: (item: T, i: number) => U
+): {item: T; result: U} {
 	let i = 0
 	for (const item of arr) {
 		const result = predicate(item, i++)
-		if (result)
-			return {item, result}
+		if (result) return {item, result}
 	}
 }
 
@@ -26,10 +26,10 @@ function first<T, U>(arr: T[], predicate: (item: T, i: number) => U): {item: T, 
  */
 export default class TokenTypes<T> {
 	public tokenTypes: {
-		type: T,
-		regex: RegExp,
-		enabled: boolean,
-		skip: boolean,
+		type: T
+		regex: RegExp
+		enabled: boolean
+		skip: boolean
 	}[]
 
 	constructor() {
@@ -43,7 +43,7 @@ export default class TokenTypes<T> {
 	enable(type: T, enabled: boolean = true): TokenTypes<T> {
 		this.tokenTypes
 			.filter(t => t.type == type)
-			.forEach(t => t.enabled = enabled)
+			.forEach(t => (t.enabled = enabled))
 		return this
 	}
 
@@ -62,7 +62,11 @@ export default class TokenTypes<T> {
 		})
 	}
 
-	token(type: T, pattern: RegExp|string, skip: boolean = false): TokenTypes<T> {
+	token(
+		type: T,
+		pattern: RegExp | string,
+		skip: boolean = false
+	): TokenTypes<T> {
 		this.tokenTypes.push({
 			type,
 			regex: normalize(pattern),
