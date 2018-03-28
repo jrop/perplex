@@ -1,3 +1,6 @@
+import Token from './token'
+import Lexer from './lexer'
+
 // Thank you, http://stackoverflow.com/a/6969486
 function toRegExp(str: string): RegExp {
 	return new RegExp(str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&'))
@@ -24,30 +27,32 @@ function first<T, U>(
 /**
  * @private
  */
-export default class TokenTypes<T> {
+export default class TokenTypes {
+	private lexer: Lexer
 	public tokenTypes: {
-		type: T
+		type: string
 		regex: RegExp
 		enabled: boolean
 		skip: boolean
 	}[]
 
-	constructor() {
+	constructor(lexer: Lexer) {
+		this.lexer = lexer
 		this.tokenTypes = []
 	}
 
-	disable(type: T): TokenTypes<T> {
+	disable(type: string): TokenTypes {
 		return this.enable(type, false)
 	}
 
-	enable(type: T, enabled: boolean = true): TokenTypes<T> {
+	enable(type: string, enabled: boolean = true): TokenTypes {
 		this.tokenTypes
 			.filter(t => t.type == type)
 			.forEach(t => (t.enabled = enabled))
 		return this
 	}
 
-	isEnabled(type: T) {
+	isEnabled(type: string) {
 		const ttypes = this.tokenTypes.filter(tt => tt.type == type)
 		if (ttypes.length == 0)
 			throw new Error(`Token of type ${type} does not exists`)
@@ -56,17 +61,28 @@ export default class TokenTypes<T> {
 
 	peek(source: string, position: number) {
 		const s = source.substr(position)
-		return first(this.tokenTypes.filter(tt => tt.enabled), tt => {
+		const match = first(this.tokenTypes.filter(tt => tt.enabled), tt => {
 			tt.regex.lastIndex = 0
 			return tt.regex.exec(s)
 		})
+		return match
+			? new Token({
+					type: match.item.type,
+					match: match.result[0],
+					groups: match.result.map(x => x),
+					start: position,
+					end: position + match.result[0].length,
+					skip: match.item.skip,
+					lexer: this.lexer,
+				})
+			: null
 	}
 
 	token(
-		type: T,
+		type: string,
 		pattern: RegExp | string,
 		skip: boolean = false
-	): TokenTypes<T> {
+	): TokenTypes {
 		this.tokenTypes.push({
 			type,
 			regex: normalize(pattern),

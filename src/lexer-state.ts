@@ -1,12 +1,9 @@
 import TokenTypes from './token-types'
 
-/**
- * @private
- */
-export default class LexerState<T> {
+export default class LexerState {
 	public source: string
 	public position: number
-	public tokenTypes: TokenTypes<T>
+	public tokenTypes: TokenTypes
 
 	constructor(source: string, position: number = 0) {
 		this.source = source
@@ -14,6 +11,6 @@ export default class LexerState<T> {
 	}
 
 	copy() {
-		return new LexerState<T>(this.source, this.position)
+		return new LexerState(this.source, this.position)
 	}
 }

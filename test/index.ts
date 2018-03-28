@@ -3,11 +3,20 @@ import Lexer from '../src/lexer'
 import Token from '../src/token'
 import _test = require('tape')
 
-function clean<T>(t: Token<T>) {
-	return except(t, 'lexer', 'strpos', 'isEof', 'constructor')
+function clean(t: Token) {
+	return except(
+		t,
+		'lexer',
+		'strpos',
+		'isEof',
+		'isUnrecognized',
+		'constructor',
+		'skip',
+		'skipped'
+	)
 }
 
-const lex = new Lexer<string>()
+const lex = new Lexer()
 	.token('WS', /\s+/)
 	.disable('WS')
 	.token('NUMBER', /\d+/)
@@ -95,7 +104,14 @@ test('.expect()', function(t) {
 test('.toArray()', function(t) {
 	t.plan(2)
 	lex.next() // make sure toArray starts from the beginning
-	t.deepLooseEqual(lex.toArray().map(t => clean(t)), [FOUR, FIVE, SIX])
+	t.deepLooseEqual(lex.toArray().map(t => clean(t)), [
+		{type: 'WHITESPACE', match: '  ', groups: ['  '], start: 0, end: 2},
+		FOUR,
+		{type: 'WHITESPACE', match: ' ', groups: [' '], start: 3, end: 4},
+		FIVE,
+		{type: 'WHITESPACE', match: ' ', groups: [' '], start: 5, end: 6},
+		SIX,
+	])
 	// make sure the original state is left intact:
 	t.deepLooseEqual(clean(lex.peek()), FIVE)
 })
@@ -126,20 +142,11 @@ test('enable/disable token types', function(t) {
 })
 
 test('unexpected input', function(t) {
-	t.plan(5)
 	lex.source = '4 asdf'
 	t.looseEqual(lex.next().match, '4')
-	t.throws(function() {
-		lex.next()
-	}, /asdf/)
-
-	// recover?
-	lex.source = '4 asdf 5'
-	t.looseEqual(lex.next().match, '4')
-	t.throws(function() {
-		lex.next()
-	}, /asdf/)
-	t.looseEqual(lex.next().match, '5')
+	t.throws(() => lex.next(), /asdf/)
+	t.assert(lex.next().isEof())
+	t.end()
 })
 
 test('.strpos()', function(t) {
