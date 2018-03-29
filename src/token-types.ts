@@ -78,7 +78,7 @@ export default class TokenTypes {
 			: null
 	}
 
-	token(
+	define(
 		type: string,
 		pattern: RegExp | string,
 		skip: boolean = false
@@ -90,5 +90,14 @@ export default class TokenTypes {
 			skip,
 		})
 		return this
+	}
+
+	defineKeyword(kwd: string) {
+		return this.define(kwd, new RegExp(`${kwd}(?=\\W|$)`))
+	}
+
+	defineOperator(op: string) {
+		const sOp = new String(op).valueOf()
+		return this.define(op, sOp)
 	}
 }

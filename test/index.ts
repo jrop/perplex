@@ -17,11 +17,12 @@ function clean(t: Token) {
 }
 
 const lex = new Lexer()
-	.token('WS', /\s+/)
+lex.tokenTypes
+	.define('WS', /\s+/)
 	.disable('WS')
-	.token('NUMBER', /\d+/)
-	.token('SINGLE_LINE_COMMENT', /\/\/[^\n]*/, true)
-	.token('WHITESPACE', /^\s+/, true)
+	.define('NUMBER', /\d+/)
+	.define('SINGLE_LINE_COMMENT', /\/\/[^\n]*/, true)
+	.define('WHITESPACE', /^\s+/, true)
 
 const test = (s, cb: _test.TestCase) =>
 	_test(s, t => {
@@ -116,9 +117,26 @@ test('.toArray()', function(t) {
 	t.deepLooseEqual(clean(lex.peek()), FIVE)
 })
 
+test('.rewind()', t => {
+	const _4 = lex.next()
+	const _5 = lex.next()
+
+	t.equal(_4.match, '4')
+	t.equal(_5.match, '5')
+
+	lex.rewind(_4)
+	t.equal(lex.next().match, '4')
+
+	lex.rewind(_5)
+	t.equal(lex.next().match, '5')
+
+	t.end()
+})
+
 test('.attach()', function(t) {
 	t.plan(1)
-	const lex2 = new Lexer().token('ALL', /.*/)
+	const lex2 = new Lexer()
+	lex2.tokenTypes.define('ALL', /.*/)
 	lex2.attachTo(lex)
 
 	lex.next() // eat 4
@@ -133,11 +151,14 @@ test('.attach()', function(t) {
 
 test('enable/disable token types', function(t) {
 	t.plan(5)
-	t.equal(lex.isEnabled('WS'), false)
-	t.looseEqual(lex.enable('WS').next().match, '  ')
-	t.equal(lex.isEnabled('WS'), true)
+	t.equal(lex.tokenTypes.isEnabled('WS'), false)
+
+	lex.tokenTypes.enable('WS')
+	t.looseEqual(lex.next().match, '  ')
+	t.equal(lex.tokenTypes.isEnabled('WS'), true)
 	t.looseEqual(lex.next().match, '4')
-	lex.disable('WS')
+
+	lex.tokenTypes.disable('WS')
 	t.looseEqual(lex.next().match, '5')
 })
 
@@ -178,4 +199,23 @@ test('.strpos()', function(t) {
 		start: {line: 3, column: 1},
 		end: {line: 3, column: 2},
 	})
+})
+
+test('recording', t => {
+	lex.options.record = true
+	const _4 = lex.next()
+	while (!lex.next().isEof());
+	t.deepLooseEqual(lex.state.trail.map(t => t.type), [
+		'WHITESPACE',
+		'NUMBER',
+		'WHITESPACE',
+		'NUMBER',
+		'WHITESPACE',
+		'NUMBER',
+		'WHITESPACE',
+	])
+
+	lex.rewind(_4)
+	t.deepLooseEqual(lex.state.trail.map(t => t.type), ['WHITESPACE'])
+	t.end()
 })

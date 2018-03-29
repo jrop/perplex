@@ -2,14 +2,27 @@ import LexerState from './lexer-state'
 import Token, {EOF, UnrecognizedToken} from './token'
 import TokenTypes from './token-types'
 
-class Lexer {
-	private _state: LexerState
-	private _tokenTypes: TokenTypes
-	private _throwOnUnrecognized = true
+export type LexerOptions = {
+	record: boolean
+	throwOnUnrecognized: boolean
+}
 
-	constructor(source: string = '') {
-		this._state = new LexerState(source)
-		this._tokenTypes = new TokenTypes(this)
+export default class Lexer {
+	public state: LexerState
+	public tokenTypes: TokenTypes
+	public options: LexerOptions = {
+		record: false,
+		throwOnUnrecognized: true,
+	}
+
+	constructor(source?: Lexer | LexerState | string) {
+		this.state = (function(): LexerState {
+			if (typeof source == 'undefined') return new LexerState('')
+			else if (source instanceof Lexer) return source.state
+			else if (source instanceof LexerState) return source
+			else if (typeof source == 'string') return new LexerState(source)
+		})()
+		this.tokenTypes = new TokenTypes(this)
 	}
 
 	//
@@ -17,19 +30,19 @@ class Lexer {
 	//
 
 	get position() {
-		return this._state.position
+		return this.state.position
 	}
 
 	set position(i: number) {
-		this._state.position = i
+		this.state.position = i
 	}
 
 	get source() {
-		return this._state.source
+		return this.state.source
 	}
 
 	set source(s: string) {
-		this._state = new LexerState(s)
+		this.state = new LexerState(s)
 	}
 
 	//
@@ -37,17 +50,7 @@ class Lexer {
 	//
 
 	attachTo(other: Lexer) {
-		this._state = other._state
-	}
-
-	disable(type: string) {
-		this._tokenTypes.disable(type)
-		return this
-	}
-
-	enable(type: string, enabled?: boolean) {
-		this._tokenTypes.enable(type, enabled)
-		return this
+		this.state = other.state
 	}
 
 	expect(type: string): Token {
@@ -63,27 +66,26 @@ class Lexer {
 		return t
 	}
 
-	isEnabled(tokenType: string) {
-		return this._tokenTypes.isEnabled(tokenType)
-	}
-
 	next(): Token {
 		try {
 			const t = this.peek()
-			this._state.position = t.end
+			this.state.position = t.end
+			this.record(t)
 			return t
 		} catch (e) {
-			this._state.position = (e.token as Token).end
+			const t = e.token as Token
+			this.record(t)
+			this.state.position = t.end
 			throw e
 		}
 	}
 
-	peek(position: number = this._state.position): Token {
+	peek(position: number = this.state.position): Token {
 		const skipped = []
 		const read = (i: number = position) => {
-			if (i >= this._state.source.length) return EOF(this)
+			if (i >= this.state.source.length) return EOF(this)
 			const t = this.peekOrUnrecognized(i)
-			if (t.isUnrecognized() && this._throwOnUnrecognized) this.throw(t)
+			if (t.isUnrecognized() && this.options.throwOnUnrecognized) this.throw(t)
 			if (t.skip) {
 				skipped.push(t)
 				return read(i + t.groups[0].length)
@@ -95,13 +97,13 @@ class Lexer {
 		return token
 	}
 
-	private peekOrUnrecognized(position: number = this._state.position): Token {
+	private peekOrUnrecognized(position: number = this.state.position): Token {
 		let i = position,
 			t: Token = null
 		let readNextRaw = (): Token =>
-			i >= this._state.source.length
+			i >= this.state.source.length
 				? (EOF(this) as Token)
-				: this._tokenTypes.peek(this._state.source, i)
+				: this.tokenTypes.peek(this.state.source, i)
 
 		while (true) {
 			t = readNextRaw()
@@ -112,12 +114,26 @@ class Lexer {
 
 		if (t.start != position)
 			return new UnrecognizedToken(
-				this._state.source.substring(position, i),
+				this.state.source.substring(position, i),
 				position,
 				i,
 				this
 			)
 		return t
+	}
+
+	private record(t: Token) {
+		if (!this.options.record) return
+		for (const s of t.skipped) this.state.trail.push(s)
+		if (!t.isEof()) this.state.trail.push(t)
+	}
+
+	rewind(tokenToRewind: Token): Lexer {
+		this.state.position = tokenToRewind.start
+		this.state.trail = this.state.trail.filter(
+			token => token.start < tokenToRewind.start
+		)
+		return this
 	}
 
 	strpos(
@@ -126,7 +142,7 @@ class Lexer {
 		line: number
 		column: number
 	} {
-		let lines = this._state.source.substring(0, i).split(/\r?\n/)
+		let lines = this.state.source.substring(0, i).split(/\r?\n/)
 		if (!Array.isArray(lines)) lines = [lines]
 
 		const line = lines.length
@@ -142,9 +158,11 @@ class Lexer {
 	}
 
 	toArray(): Token[] {
-		const oldState = this._state.copy()
-		this._state.position = 0
-		this._throwOnUnrecognized = false
+		const oldState = this.state.copy()
+		this.state.position = 0
+
+		const shouldThrow = this.options.throwOnUnrecognized
+		this.options.throwOnUnrecognized = false
 
 		const tkns: Token[] = []
 		let t
@@ -153,25 +171,10 @@ class Lexer {
 			tkns.push(t)
 		}
 
-		this._state = oldState
-		this._throwOnUnrecognized = true
+		this.state = oldState
+		this.options.throwOnUnrecognized = shouldThrow
 		return tkns
-	}
-
-	token(type: string, pattern: string | RegExp, skip?: boolean) {
-		this._tokenTypes.token(type, pattern, skip)
-		return this
-	}
-
-	keyword(kwd: string) {
-		return this.token(kwd, new RegExp(`${kwd}(?=\\W|$)`))
-	}
-
-	operator(op: string) {
-		const sOp = new String(op).valueOf()
-		return this.token(op, sOp)
 	}
 }
 
-export default Lexer
 export {EOF, Token, TokenTypes, LexerState}
