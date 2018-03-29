@@ -26,7 +26,7 @@ lex.tokenTypes
 
 const test = (s, cb: _test.TestCase) =>
 	_test(s, t => {
-		lex.source = '  4 5 6  '
+		lex.state.source = '  4 5 6  '
 		return cb(t)
 	})
 
@@ -55,19 +55,19 @@ const SIX = {
 test('.source (get)', function(t) {
 	t.plan(1)
 	lex.next() // 4
-	t.looseEqual(lex.source.replace(/\s+/g, ''), '456')
+	t.looseEqual(lex.state.source.replace(/\s+/g, ''), '456')
 })
 
 test('.position (get)', function(t) {
 	t.plan(1)
 	lex.next() // 4
-	t.looseEqual(lex.position, 3)
+	t.looseEqual(lex.state.position, 3)
 })
 
 test('.position (set)', function(t) {
 	t.plan(1)
 	lex.next() // 4
-	lex.position = 0
+	lex.state.position = 0
 	t.looseEqual(lex.next().match.trim(), '4')
 })
 
@@ -163,7 +163,7 @@ test('enable/disable token types', function(t) {
 })
 
 test('unexpected input', function(t) {
-	lex.source = '4 asdf'
+	lex.state.source = '4 asdf'
 	t.looseEqual(lex.next().match, '4')
 	t.throws(() => lex.next(), /asdf/)
 	t.assert(lex.next().isEof())
@@ -172,7 +172,7 @@ test('unexpected input', function(t) {
 
 test('.strpos()', function(t) {
 	t.plan(4)
-	lex.source = `4
+	lex.state.source = `4
 5 6
 7`
 

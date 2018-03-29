@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "doc": "tsc --target es2017 --module es2015 && esdoc lib/",
+    "build": "tsc && node readme.js",
     "lint": "prettier -l 'src/**/*.ts'",
     "lint:fix": "prettier --write '{src,test}/**/*.ts'",
     "precommit": "npm run lint && npm run test",
@@ -19,7 +19,6 @@
   "devDependencies": {
     "@types/node": "^7.0.10",
     "@types/tape": "^4.2.30",
-    "esdoc": "^0.5.2",
     "except": "^0.1.3",
     "husky": "^0.14.3",
     "nyc": "^11.6.0",
@@ -34,7 +33,9 @@
     "registry": "https://registry.npmjs.org/"
   },
   "nyc": {
-    "extension": [".ts"]
+    "extension": [
+      ".ts"
+    ]
   },
   "files": [
     "lib/lexer-state.d.ts",

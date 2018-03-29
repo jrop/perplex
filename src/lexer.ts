@@ -26,26 +26,6 @@ export default class Lexer {
 	}
 
 	//
-	// Getters/Setters
-	//
-
-	get position() {
-		return this.state.position
-	}
-
-	set position(i: number) {
-		this.state.position = i
-	}
-
-	get source() {
-		return this.state.source
-	}
-
-	set source(s: string) {
-		this.state = new LexerState(s)
-	}
-
-	//
 	// METHODS
 	//
 
@@ -130,9 +110,6 @@ export default class Lexer {
 
 	rewind(tokenToRewind: Token): Lexer {
 		this.state.position = tokenToRewind.start
-		this.state.trail = this.state.trail.filter(
-			token => token.start < tokenToRewind.start
-		)
 		return this
 	}
 

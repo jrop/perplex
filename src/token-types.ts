@@ -24,9 +24,6 @@ function first<T, U>(
 	}
 }
 
-/**
- * @private
- */
 export default class TokenTypes {
 	private lexer: Lexer
 	public tokenTypes: {
@@ -74,20 +71,21 @@ export default class TokenTypes {
 					end: position + match.result[0].length,
 					skip: match.item.skip,
 					lexer: this.lexer,
-				})
+			  })
 			: null
 	}
 
 	define(
 		type: string,
 		pattern: RegExp | string,
-		skip: boolean = false
+		skip: boolean = false,
+		enabled: boolean = true
 	): TokenTypes {
 		this.tokenTypes.push({
 			type,
 			regex: normalize(pattern),
-			enabled: true,
 			skip,
+			enabled,
 		})
 		return this
 	}

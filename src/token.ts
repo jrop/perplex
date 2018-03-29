@@ -48,7 +48,7 @@ export default Token
 
 export class EOFToken extends Token {
 	constructor(lexer: Lexer) {
-		const end = lexer.source.length
+		const end = lexer.state.source.length
 		super({
 			type: null,
 			match: '(eof)',
