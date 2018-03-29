@@ -10,6 +10,8 @@
     "precommit": "npm run lint && npm run test",
     "prepack": "tsc && npm test",
     "test": "tape -r 'ts-node/register' test/index.ts",
+    "test:diff": "npm test | tap-diff",
+    "test:spec": "npm test | tap-spec",
     "test:cover": "nyc npm test",
     "test:cover:html": "nyc -r html npm test"
   },
@@ -23,6 +25,8 @@
     "husky": "^0.14.3",
     "nyc": "^11.6.0",
     "prettier": "^1.10.2",
+    "tap-diff": "^0.1.1",
+    "tap-spec": "^4.1.1",
     "tape": "^4.7.0",
     "ts-node": "^3.2.1",
     "tslint": "^4.5.1",

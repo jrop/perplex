@@ -2,19 +2,45 @@ import LexerState from './lexer-state'
 import Token, {EOF, UnrecognizedToken} from './token'
 import TokenTypes from './token-types'
 
+/**
+ * The options a Lexer abides by
+ */
 export type LexerOptions = {
 	record: boolean
 	throwOnUnrecognized: boolean
 }
 
+/**
+ * The main Lexer class
+ */
 export default class Lexer {
+	/**
+	 * The internal state of the lexer.  Multiple lexers can
+	 * utilize the same shared state.  See `attachTo`.
+	 */
 	public state: LexerState
+
+	/**
+	 * The token types that this Lexer can consume
+	 */
 	public tokenTypes: TokenTypes
+
+	/**
+	 * Change certain behaviors by manipulating
+	 * these options
+	 */
 	public options: LexerOptions = {
 		record: false,
 		throwOnUnrecognized: true,
 	}
 
+	/**
+	 * Constructs a new Lexer
+	 * @param source Either:
+	 *   1) a string
+	 *   2) Another Lexer to attach to, or
+	 *   3) LexerState to use as the underlying state
+	 */
 	constructor(source?: Lexer | LexerState | string) {
 		this.state = (function(): LexerState {
 			if (typeof source == 'undefined') return new LexerState('')
@@ -29,10 +55,20 @@ export default class Lexer {
 	// METHODS
 	//
 
+	/**
+	 * Utilize the `other` Lexer's underlying state as our own.
+	 * Allows two or more Lexers to attache to the same state
+	 * and both stream through tokens in a coordinated manner.
+	 * @param other The other lexer to attach to
+	 */
 	attachTo(other: Lexer) {
 		this.state = other.state
 	}
 
+	/**
+	 * Throw if `.next().type != type`
+	 * @param type The type of token to expect
+	 */
 	expect(type: string): Token {
 		const t = this.next()
 		if (t.type != type) {
@@ -46,6 +82,9 @@ export default class Lexer {
 		return t
 	}
 
+	/**
+	 * Retrieve the next token, and advance the current position
+	 */
 	next(): Token {
 		try {
 			const t = this.peek()
@@ -60,6 +99,10 @@ export default class Lexer {
 		}
 	}
 
+	/**
+	 * Peek at the next token without consuming it
+	 * @param position The position to peek at
+	 */
 	peek(position: number = this.state.position): Token {
 		const skipped = []
 		const read = (i: number = position) => {
@@ -108,11 +151,19 @@ export default class Lexer {
 		if (!t.isEof()) this.state.trail.push(t)
 	}
 
+	/**
+	 * Restore the Lexer state to the way it was before `tokenToRewind` was consumed
+	 * @param tokenToRewind
+	 */
 	rewind(tokenToRewind: Token): Lexer {
 		this.state.position = tokenToRewind.start
 		return this
 	}
 
+	/**
+	 * Return the {line, column} of a position `i` in the string
+	 * @param i
+	 */
 	strpos(
 		i: number
 	): {
@@ -127,6 +178,10 @@ export default class Lexer {
 		return {line, column}
 	}
 
+	/**
+	 * Throw an error like `Unexpected input: ...` based on a token
+	 * @param t The token to base the error message on
+	 */
 	throw(t: Token) {
 		const {line, column} = this.strpos(t.start)
 		const e = new Error(`Unexpected input: ${t.match} at (${line}:${column})`)
@@ -134,6 +189,11 @@ export default class Lexer {
 		throw e
 	}
 
+	/**
+	 * Retrieve the array of tokens in the underlying string.
+	 * Includes all unexpected input, and skipped tokens as
+	 * top-level entries in the returned array.
+	 */
 	toArray(): Token[] {
 		const oldState = this.state.copy()
 		this.state.position = 0
@@ -142,11 +202,15 @@ export default class Lexer {
 		this.options.throwOnUnrecognized = false
 
 		const tkns: Token[] = []
+		const addSkipped = (t: Token) => {
+			for (const tkn of t.skipped) tkns.push(tkn)
+		}
 		let t
 		while (!(t = this.next()).isEof()) {
-			for (const tkn of t.skipped) tkns.push(tkn)
+			addSkipped(t)
 			tkns.push(t)
 		}
+		addSkipped(t)
 
 		this.state = oldState
 		this.options.throwOnUnrecognized = shouldThrow

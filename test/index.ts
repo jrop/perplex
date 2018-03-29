@@ -112,6 +112,7 @@ test('.toArray()', function(t) {
 		FIVE,
 		{type: 'WHITESPACE', match: ' ', groups: [' '], start: 5, end: 6},
 		SIX,
+		{type: 'WHITESPACE', match: '  ', groups: ['  '], start: 7, end: 9},
 	])
 	// make sure the original state is left intact:
 	t.deepLooseEqual(clean(lex.peek()), FIVE)
@@ -217,5 +218,50 @@ test('recording', t => {
 
 	lex.rewind(_4)
 	t.deepLooseEqual(lex.state.trail.map(t => t.type), ['WHITESPACE'])
+	t.end()
+})
+
+test('preservation', t => {
+	// test for recognized input
+	t.equal(
+		lex.state.source,
+		lex
+			.toArray()
+			.map(t => t.match)
+			.join(''),
+		'preserves all tokens'
+	)
+
+	// test for unrecognized input
+	lex.state.source = '1 asdf'
+	const tokens = lex.toArray()
+	t.assert(tokens[2].isUnrecognized(), 'containes unrecognized token')
+	t.equal(
+		lex.state.source,
+		tokens.map(t => t.match).join(''),
+		'preserves unrecognized'
+	)
+
+	// test rewriting token stream:
+	tokens[2] = new Token({
+		type: 'NUM',
+		start: -1,
+		end: -1,
+		lexer: lex,
+		groups: ['2'],
+		match: '2',
+	})
+	tokens.push(
+		new Token({
+			type: 'WHITESPACE',
+			start: -1,
+			end: -1,
+			lexer: lex,
+			groups: ['  '],
+			match: '  ',
+		})
+	)
+	t.equal('1 2  ', tokens.map(t => t.match).join(''), 'rewrite token stream')
+
 	t.end()
 })

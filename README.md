@@ -42,27 +42,85 @@ lexer.next()
 import LexerState from './lexer-state';
 import Token, { EOF } from './token';
 import TokenTypes from './token-types';
+/**
+ * The options a Lexer abides by
+ */
 export declare type LexerOptions = {
     record: boolean;
     throwOnUnrecognized: boolean;
 };
+/**
+ * The main Lexer class
+ */
 export default class Lexer {
+    /**
+     * The internal state of the lexer.  Multiple lexers can
+     * utilize the same shared state.  See `attachTo`.
+     */
     state: LexerState;
+    /**
+     * The token types that this Lexer can consume
+     */
     tokenTypes: TokenTypes;
+    /**
+     * Change certain behaviors by manipulating
+     * these options
+     */
     options: LexerOptions;
+    /**
+     * Constructs a new Lexer
+     * @param source Either:
+     *   1) a string
+     *   2) Another Lexer to attach to, or
+     *   3) LexerState to use as the underlying state
+     */
     constructor(source?: Lexer | LexerState | string);
+    /**
+     * Utilize the `other` Lexer's underlying state as our own.
+     * Allows two or more Lexers to attache to the same state
+     * and both stream through tokens in a coordinated manner.
+     * @param other The other lexer to attach to
+     */
     attachTo(other: Lexer): void;
+    /**
+     * Throw if `.next().type != type`
+     * @param type The type of token to expect
+     */
     expect(type: string): Token;
+    /**
+     * Retrieve the next token, and advance the current position
+     */
     next(): Token;
+    /**
+     * Peek at the next token without consuming it
+     * @param position The position to peek at
+     */
     peek(position?: number): Token;
     private peekOrUnrecognized(position?);
     private record(t);
+    /**
+     * Restore the Lexer state to the way it was before `tokenToRewind` was consumed
+     * @param tokenToRewind
+     */
     rewind(tokenToRewind: Token): Lexer;
+    /**
+     * Return the {line, column} of a position `i` in the string
+     * @param i
+     */
     strpos(i: number): {
         line: number;
         column: number;
     };
+    /**
+     * Throw an error like `Unexpected input: ...` based on a token
+     * @param t The token to base the error message on
+     */
     throw(t: Token): void;
+    /**
+     * Retrieve the array of tokens in the underlying string.
+     * Includes all unexpected input, and skipped tokens as
+     * top-level entries in the returned array.
+     */
     toArray(): Token[];
 }
 export { EOF, Token, TokenTypes, LexerState };
