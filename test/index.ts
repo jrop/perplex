@@ -200,6 +200,22 @@ test('.strpos()', function(t) {
 	})
 })
 
+test('.defineKeyword()', function(t) {
+	const lex = new Lexer()
+	lex.tokenTypes.defineKeyword('asdf', 'asdf')
+	lex.state.source = 'asdf('
+	t.equal(lex.next().type, 'asdf')
+	t.end()
+})
+
+test('.defineOperator()', function(t) {
+	const lex = new Lexer()
+	lex.tokenTypes.defineOperator('+', '+')
+	lex.state.source = '+('
+	t.equal(lex.next().type, '+')
+	t.end()
+})
+
 test('recording', t => {
 	lex.options.record = true
 	const _4 = lex.next()

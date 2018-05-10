@@ -1,7 +1,13 @@
 const fs = require('fs')
 
 const section = (title, f) =>
-	`### ${title}\r\n` + '```ts\r\n' + fs.readFileSync(f, 'utf8').trim() + '\r\n```'
+	`### ${title}\r\n` +
+	'```ts\r\n' +
+	fs
+		.readFileSync(f, 'utf8')
+		.replace(/^\s*private.*(?:\r?\n)?/mg, '')
+		.trim() +
+	'\r\n```'
 
 const api = () =>
 	[

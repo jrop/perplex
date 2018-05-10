@@ -42,7 +42,7 @@ export default class Lexer<T = string> {
 	 *   3) LexerState to use as the underlying state
 	 */
 	constructor(source?: Lexer<T> | LexerState<T> | string) {
-		this.state = (function(): LexerState<T> {
+		this.state = ((): LexerState<T> => {
 			if (typeof source == 'undefined') return new LexerState('')
 			else if (source instanceof Lexer) return source.state
 			else if (source instanceof LexerState) return source
@@ -107,7 +107,7 @@ export default class Lexer<T = string> {
 		const skipped = []
 		const read = (i: number = position) => {
 			if (i >= this.state.source.length) return EOF(this)
-			const t = this.peekOrUnrecognized(i)
+			const t = this.tokenTypes.peek(this.state.source, i)
 			if (t.isUnrecognized() && this.options.throwOnUnrecognized) this.throw(t)
 			if (t.skip) {
 				skipped.push(t)
@@ -118,31 +118,6 @@ export default class Lexer<T = string> {
 		const token: Token<T> = read()
 		token.skipped = skipped
 		return token
-	}
-
-	private peekOrUnrecognized(position: number = this.state.position): Token<T> {
-		let i = position,
-			t: Token<T> = null
-		let readNextRaw = (): Token<T> =>
-			i >= this.state.source.length
-				? (EOF(this) as Token<T>)
-				: this.tokenTypes.peek(this.state.source, i)
-
-		while (true) {
-			t = readNextRaw()
-			if (t) break
-			if (t && t.isEof()) break
-			i++
-		}
-
-		if (t.start != position)
-			return new UnrecognizedToken(
-				this.state.source.substring(position, i),
-				position,
-				i,
-				this
-			)
-		return t
 	}
 
 	private record(t: Token<T>) {

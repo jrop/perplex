@@ -52,16 +52,16 @@ export declare type LexerOptions = {
 /**
  * The main Lexer class
  */
-export default class Lexer {
+export default class Lexer<T = string> {
     /**
      * The internal state of the lexer.  Multiple lexers can
      * utilize the same shared state.  See `attachTo`.
      */
-    state: LexerState;
+    state: LexerState<T>;
     /**
      * The token types that this Lexer can consume
      */
-    tokenTypes: TokenTypes;
+    tokenTypes: TokenTypes<T>;
     /**
      * Change certain behaviors by manipulating
      * these options
@@ -74,35 +74,33 @@ export default class Lexer {
      *   2) Another Lexer to attach to, or
      *   3) LexerState to use as the underlying state
      */
-    constructor(source?: Lexer | LexerState | string);
+    constructor(source?: Lexer<T> | LexerState<T> | string);
     /**
      * Utilize the `other` Lexer's underlying state as our own.
      * Allows two or more Lexers to attache to the same state
      * and both stream through tokens in a coordinated manner.
      * @param other The other lexer to attach to
      */
-    attachTo(other: Lexer): void;
+    attachTo(other: Lexer<T>): void;
     /**
      * Throw if `.next().type != type`
      * @param type The type of token to expect
      */
-    expect(type: string): Token;
+    expect(type: T): Token<T>;
     /**
      * Retrieve the next token, and advance the current position
      */
-    next(): Token;
+    next(): Token<T>;
     /**
      * Peek at the next token without consuming it
      * @param position The position to peek at
      */
-    peek(position?: number): Token;
-    private peekOrUnrecognized(position?);
-    private record(t);
+    peek(position?: number): Token<T>;
     /**
      * Restore the Lexer state to the way it was before `tokenToRewind` was consumed
      * @param tokenToRewind
      */
-    rewind(tokenToRewind: Token): Lexer;
+    rewind(tokenToRewind: Token<T>): Lexer<T>;
     /**
      * Return the {line, column} of a position `i` in the string
      * @param i
@@ -115,13 +113,13 @@ export default class Lexer {
      * Throw an error like `Unexpected input: ...` based on a token
      * @param t The token to base the error message on
      */
-    throw(t: Token): void;
+    throw(t: Token<T>): void;
     /**
      * Retrieve the array of tokens in the underlying string.
      * Includes all unexpected input, and skipped tokens as
      * top-level entries in the returned array.
      */
-    toArray(): Token[];
+    toArray(): Token<T>[];
 }
 export { EOF, Token, TokenTypes, LexerState };
 ```
@@ -130,15 +128,13 @@ export { EOF, Token, TokenTypes, LexerState };
 ```ts
 import TokenTypes from './token-types';
 import Token from './token';
-export default class LexerState {
-    private _source;
-    private _position;
-    tokenTypes: TokenTypes;
-    trail: Token[];
+export default class LexerState<T = string> {
+    tokenTypes: TokenTypes<T>;
+    trail: Token<T>[];
     constructor(source: string, position?: number);
     source: string;
     position: number;
-    copy(): LexerState;
+    copy(): LexerState<T>;
 }
 ```
 
@@ -146,46 +142,45 @@ export default class LexerState {
 ```ts
 import Token from './token';
 import Lexer from './lexer';
-export default class TokenTypes {
-    private lexer;
+export default class TokenTypes<T = string> {
     tokenTypes: {
-        type: string;
+        type: T;
         regex: RegExp;
         enabled: boolean;
         skip: boolean;
     }[];
-    constructor(lexer: Lexer);
-    disable(type: string): TokenTypes;
-    enable(type: string, enabled?: boolean): TokenTypes;
-    isEnabled(type: string): boolean;
-    peek(source: string, position: number): Token;
-    define(type: string, pattern: RegExp | string, skip?: boolean, enabled?: boolean): TokenTypes;
-    defineKeyword(kwd: string): TokenTypes;
-    defineOperator(op: string): TokenTypes;
+    constructor(lexer: Lexer<T>);
+    disable(type: T): TokenTypes<T>;
+    enable(type: T, enabled?: boolean): TokenTypes<T>;
+    isEnabled(type: T): boolean;
+    peek(source: string, position: number): Token<any>;
+    define(type: T, pattern: RegExp | string, skip?: boolean, enabled?: boolean): TokenTypes<T>;
+    defineKeyword(type: T, kwd: string): TokenTypes<T>;
+    defineOperator(type: T, op: T): TokenTypes<T>;
 }
 ```
 
 ### Token
 ```ts
 import Lexer from './lexer';
-declare class Token {
-    type: string;
+declare class Token<T = string> {
+    type: T;
     match: string;
     groups: string[];
     start: number;
     end: number;
-    lexer: Lexer;
+    lexer: Lexer<T>;
     skip: boolean;
-    skipped: Token[];
+    skipped: Token<T>[];
     constructor(opts: {
-        type: string;
+        type: T;
         match: string;
         groups: string[];
         start: number;
         end: number;
-        lexer: Lexer;
+        lexer: Lexer<T>;
         skip?: boolean;
-        skipped?: Token[];
+        skipped?: Token<T>[];
     });
     strpos(): {
         start: {
@@ -199,17 +194,18 @@ declare class Token {
     };
     isEof(): boolean;
     isUnrecognized(): boolean;
+    toString(): string;
 }
 export default Token;
-export declare class EOFToken extends Token {
-    constructor(lexer: Lexer);
+export declare class EOFToken<T> extends Token<T> {
+    constructor(lexer: Lexer<T>);
     isEof(): boolean;
 }
-export declare class UnrecognizedToken extends Token {
-    constructor(match: string, start: number, end: number, lexer: Lexer);
+export declare class UnrecognizedToken<T> extends Token<T> {
+    constructor(match: string, start: number, end: number, lexer: Lexer<T>);
     isUnrecognized(): boolean;
 }
-export declare const EOF: (lexer: Lexer) => EOFToken;
+export declare const EOF: <T>(lexer: Lexer<T>) => EOFToken<T>;
 ```
 
 # License

@@ -1,4 +1,4 @@
-import Token from './token'
+import Token, {UnrecognizedToken} from './token'
 import Lexer from './lexer'
 
 // Thank you, http://stackoverflow.com/a/6969486
@@ -32,6 +32,12 @@ export default class TokenTypes<T = string> {
 		enabled: boolean
 		skip: boolean
 	}[]
+	private UNMATCHED_TT = {
+		type: null,
+		regex: normalize(/(?:.|\s)*/),
+		enabled: true,
+		skip: true,
+	}
 
 	constructor(lexer: Lexer<T>) {
 		this.lexer = lexer
@@ -57,13 +63,19 @@ export default class TokenTypes<T = string> {
 	}
 
 	peek(source: string, position: number) {
-		const s = source.substr(position)
-		const match = first(this.tokenTypes.filter(tt => tt.enabled), tt => {
+		const tts = [...this.tokenTypes, this.UNMATCHED_TT]
+		const match = first(tts.filter(tt => tt.enabled), tt => {
 			tt.regex.lastIndex = 0
-			return tt.regex.exec(s)
+			return tt.regex.exec(source.substring(position))
 		})
-		return match
-			? new Token({
+		return match.item == this.UNMATCHED_TT
+			? new UnrecognizedToken(
+					match.result[0],
+					position,
+					position + match.result[0].length,
+					null
+			  )
+			: new Token({
 					type: match.item.type,
 					match: match.result[0],
 					groups: match.result.map(x => x),
@@ -72,7 +84,6 @@ export default class TokenTypes<T = string> {
 					skip: match.item.skip,
 					lexer: this.lexer,
 			  })
-			: null
 	}
 
 	define(
