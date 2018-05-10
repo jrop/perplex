@@ -1,11 +1,11 @@
 import TokenTypes from './token-types'
 import Token from './token'
 
-export default class LexerState {
+export default class LexerState<T = string> {
 	private _source: string
 	private _position: number
-	public tokenTypes: TokenTypes
-	public trail: Token[] = []
+	public tokenTypes: TokenTypes<T>
+	public trail: Token<T>[] = []
 
 	constructor(source: string, position: number = 0) {
 		this._source = source
@@ -28,7 +28,7 @@ export default class LexerState {
 	}
 
 	copy() {
-		const newState = new LexerState(this.source, this.position)
+		const newState = new LexerState<T>(this.source, this.position)
 		newState.trail = this.trail.slice()
 		return newState
 	}

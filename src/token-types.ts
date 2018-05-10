@@ -24,32 +24,32 @@ function first<T, U>(
 	}
 }
 
-export default class TokenTypes {
-	private lexer: Lexer
+export default class TokenTypes<T = string> {
+	private lexer: Lexer<T>
 	public tokenTypes: {
-		type: string
+		type: T
 		regex: RegExp
 		enabled: boolean
 		skip: boolean
 	}[]
 
-	constructor(lexer: Lexer) {
+	constructor(lexer: Lexer<T>) {
 		this.lexer = lexer
 		this.tokenTypes = []
 	}
 
-	disable(type: string): TokenTypes {
+	disable(type: T): TokenTypes<T> {
 		return this.enable(type, false)
 	}
 
-	enable(type: string, enabled: boolean = true): TokenTypes {
+	enable(type: T, enabled: boolean = true): TokenTypes<T> {
 		this.tokenTypes
 			.filter(t => t.type == type)
 			.forEach(t => (t.enabled = enabled))
 		return this
 	}
 
-	isEnabled(type: string) {
+	isEnabled(type: T) {
 		const ttypes = this.tokenTypes.filter(tt => tt.type == type)
 		if (ttypes.length == 0)
 			throw new Error(`Token of type ${type} does not exists`)
@@ -76,11 +76,11 @@ export default class TokenTypes {
 	}
 
 	define(
-		type: string,
+		type: T,
 		pattern: RegExp | string,
 		skip: boolean = false,
 		enabled: boolean = true
-	): TokenTypes {
+	): TokenTypes<T> {
 		this.tokenTypes.push({
 			type,
 			regex: normalize(pattern),
@@ -90,12 +90,12 @@ export default class TokenTypes {
 		return this
 	}
 
-	defineKeyword(kwd: string) {
-		return this.define(kwd, new RegExp(`${kwd}(?=\\W|$)`))
+	defineKeyword(type: T, kwd: string) {
+		return this.define(type, new RegExp(`${kwd}(?=\\W|$)`))
 	}
 
-	defineOperator(op: string) {
+	defineOperator(type: T, op: T) {
 		const sOp = new String(op).valueOf()
-		return this.define(op, sOp)
+		return this.define(type, sOp)
 	}
 }

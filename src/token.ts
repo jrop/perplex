@@ -1,24 +1,24 @@
 import Lexer from './lexer'
 
-class Token {
-	type: string
+class Token<T = string> {
+	type: T
 	match: string
 	groups: string[]
 	start: number
 	end: number
-	lexer: Lexer
+	lexer: Lexer<T>
 	skip: boolean
-	skipped: Token[]
+	skipped: Token<T>[]
 
 	constructor(opts: {
-		type: string
+		type: T
 		match: string
 		groups: string[]
 		start: number
 		end: number
-		lexer: Lexer
+		lexer: Lexer<T>
 		skip?: boolean
-		skipped?: Token[]
+		skipped?: Token<T>[]
 	}) {
 		this.type = opts.type
 		this.match = opts.match
@@ -42,12 +42,17 @@ class Token {
 	isUnrecognized() {
 		return false
 	}
+	toString() {
+		return (
+			this.skipped.map(t => t.match).join('') + (this.isEof() ? '' : this.match)
+		)
+	}
 }
 
 export default Token
 
-export class EOFToken extends Token {
-	constructor(lexer: Lexer) {
+export class EOFToken<T> extends Token<T> {
+	constructor(lexer: Lexer<T>) {
 		const end = lexer.state.source.length
 		super({
 			type: null,
@@ -64,10 +69,10 @@ export class EOFToken extends Token {
 		return true
 	}
 }
-export class UnrecognizedToken extends Token {
-	constructor(match: string, start: number, end: number, lexer: Lexer) {
+export class UnrecognizedToken<T> extends Token<T> {
+	constructor(match: string, start: number, end: number, lexer: Lexer<T>) {
 		super({
-			type: 'ERROR',
+			type: null,
 			match,
 			groups: [match],
 			start,
@@ -81,4 +86,4 @@ export class UnrecognizedToken extends Token {
 	}
 }
 
-export const EOF = (lexer: Lexer) => new EOFToken(lexer)
+export const EOF = <T>(lexer: Lexer<T>) => new EOFToken<T>(lexer)

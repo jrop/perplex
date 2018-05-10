@@ -1,18 +1,19 @@
 import * as except from 'except'
 import Lexer from '../src/lexer'
-import Token from '../src/token'
+import Token, { EOF } from '../src/token'
 import _test = require('tape')
 
 function clean(t: Token) {
 	return except(
 		t,
-		'lexer',
-		'strpos',
+		'constructor',
 		'isEof',
 		'isUnrecognized',
-		'constructor',
+		'lexer',
 		'skip',
-		'skipped'
+		'skipped',
+		'strpos',
+		'toString'
 	)
 }
 
@@ -106,13 +107,10 @@ test('.toArray()', function(t) {
 	t.plan(2)
 	lex.next() // make sure toArray starts from the beginning
 	t.deepLooseEqual(lex.toArray().map(t => clean(t)), [
-		{type: 'WHITESPACE', match: '  ', groups: ['  '], start: 0, end: 2},
 		FOUR,
-		{type: 'WHITESPACE', match: ' ', groups: [' '], start: 3, end: 4},
 		FIVE,
-		{type: 'WHITESPACE', match: ' ', groups: [' '], start: 5, end: 6},
 		SIX,
-		{type: 'WHITESPACE', match: '  ', groups: ['  '], start: 7, end: 9},
+		clean(EOF(lex)),
 	])
 	// make sure the original state is left intact:
 	t.deepLooseEqual(clean(lex.peek()), FIVE)
@@ -227,7 +225,7 @@ test('preservation', t => {
 		lex.state.source,
 		lex
 			.toArray()
-			.map(t => t.match)
+			.map(t => t.toString())
 			.join(''),
 		'preserves all tokens'
 	)
@@ -235,23 +233,19 @@ test('preservation', t => {
 	// test for unrecognized input
 	lex.state.source = '1 asdf'
 	const tokens = lex.toArray()
-	t.assert(tokens[2].isUnrecognized(), 'containes unrecognized token')
+	const eof = tokens[1]
+	t.assert(eof.isEof())
+	t.equal(eof.skipped.length, 2)
+	t.assert(tokens[1].skipped[1].isUnrecognized(), 'contains unrecognized token')
 	t.equal(
 		lex.state.source,
-		tokens.map(t => t.match).join(''),
+		tokens.map(t => t.toString()).join(''),
 		'preserves unrecognized'
 	)
 
 	// test rewriting token stream:
-	tokens[2] = new Token({
-		type: 'NUM',
-		start: -1,
-		end: -1,
-		lexer: lex,
-		groups: ['2'],
-		match: '2',
-	})
-	tokens.push(
+	tokens[0].match = '777'
+	tokens[1].skipped.push(
 		new Token({
 			type: 'WHITESPACE',
 			start: -1,
@@ -261,7 +255,7 @@ test('preservation', t => {
 			match: '  ',
 		})
 	)
-	t.equal('1 2  ', tokens.map(t => t.match).join(''), 'rewrite token stream')
+	t.equal('777 asdf  ', tokens.map(t => t.toString()).join(''), 'rewrite token stream')
 
 	t.end()
 })

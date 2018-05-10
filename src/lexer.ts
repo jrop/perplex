@@ -13,17 +13,17 @@ export type LexerOptions = {
 /**
  * The main Lexer class
  */
-export default class Lexer {
+export default class Lexer<T = string> {
 	/**
 	 * The internal state of the lexer.  Multiple lexers can
 	 * utilize the same shared state.  See `attachTo`.
 	 */
-	public state: LexerState
+	public state: LexerState<T>
 
 	/**
 	 * The token types that this Lexer can consume
 	 */
-	public tokenTypes: TokenTypes
+	public tokenTypes: TokenTypes<T>
 
 	/**
 	 * Change certain behaviors by manipulating
@@ -41,8 +41,8 @@ export default class Lexer {
 	 *   2) Another Lexer to attach to, or
 	 *   3) LexerState to use as the underlying state
 	 */
-	constructor(source?: Lexer | LexerState | string) {
-		this.state = (function(): LexerState {
+	constructor(source?: Lexer<T> | LexerState<T> | string) {
+		this.state = (function(): LexerState<T> {
 			if (typeof source == 'undefined') return new LexerState('')
 			else if (source instanceof Lexer) return source.state
 			else if (source instanceof LexerState) return source
@@ -61,7 +61,7 @@ export default class Lexer {
 	 * and both stream through tokens in a coordinated manner.
 	 * @param other The other lexer to attach to
 	 */
-	attachTo(other: Lexer) {
+	attachTo(other: Lexer<T>) {
 		this.state = other.state
 	}
 
@@ -69,7 +69,7 @@ export default class Lexer {
 	 * Throw if `.next().type != type`
 	 * @param type The type of token to expect
 	 */
-	expect(type: string): Token {
+	expect(type: T): Token<T> {
 		const t = this.next()
 		if (t.type != type) {
 			const pos = t.strpos()
@@ -85,14 +85,14 @@ export default class Lexer {
 	/**
 	 * Retrieve the next token, and advance the current position
 	 */
-	next(): Token {
+	next(): Token<T> {
 		try {
 			const t = this.peek()
 			this.state.position = t.end
 			this.record(t)
 			return t
 		} catch (e) {
-			const t = e.token as Token
+			const t = e.token as Token<T>
 			this.record(t)
 			this.state.position = t.end
 			throw e
@@ -103,7 +103,7 @@ export default class Lexer {
 	 * Peek at the next token without consuming it
 	 * @param position The position to peek at
 	 */
-	peek(position: number = this.state.position): Token {
+	peek(position: number = this.state.position): Token<T> {
 		const skipped = []
 		const read = (i: number = position) => {
 			if (i >= this.state.source.length) return EOF(this)
@@ -115,17 +115,17 @@ export default class Lexer {
 			} else return t
 		}
 
-		const token: Token = read()
+		const token: Token<T> = read()
 		token.skipped = skipped
 		return token
 	}
 
-	private peekOrUnrecognized(position: number = this.state.position): Token {
+	private peekOrUnrecognized(position: number = this.state.position): Token<T> {
 		let i = position,
-			t: Token = null
-		let readNextRaw = (): Token =>
+			t: Token<T> = null
+		let readNextRaw = (): Token<T> =>
 			i >= this.state.source.length
-				? (EOF(this) as Token)
+				? (EOF(this) as Token<T>)
 				: this.tokenTypes.peek(this.state.source, i)
 
 		while (true) {
@@ -145,7 +145,7 @@ export default class Lexer {
 		return t
 	}
 
-	private record(t: Token) {
+	private record(t: Token<T>) {
 		if (!this.options.record) return
 		for (const s of t.skipped) this.state.trail.push(s)
 		if (!t.isEof()) this.state.trail.push(t)
@@ -155,7 +155,7 @@ export default class Lexer {
 	 * Restore the Lexer state to the way it was before `tokenToRewind` was consumed
 	 * @param tokenToRewind
 	 */
-	rewind(tokenToRewind: Token): Lexer {
+	rewind(tokenToRewind: Token<T>): Lexer<T> {
 		this.state.position = tokenToRewind.start
 		return this
 	}
@@ -182,7 +182,7 @@ export default class Lexer {
 	 * Throw an error like `Unexpected input: ...` based on a token
 	 * @param t The token to base the error message on
 	 */
-	throw(t: Token) {
+	throw(t: Token<T>) {
 		const {line, column} = this.strpos(t.start)
 		const e = new Error(`Unexpected input: ${t.match} at (${line}:${column})`)
 		;(e as any).token = t
@@ -194,23 +194,17 @@ export default class Lexer {
 	 * Includes all unexpected input, and skipped tokens as
 	 * top-level entries in the returned array.
 	 */
-	toArray(): Token[] {
+	toArray(): Token<T>[] {
 		const oldState = this.state.copy()
 		this.state.position = 0
 
 		const shouldThrow = this.options.throwOnUnrecognized
 		this.options.throwOnUnrecognized = false
 
-		const tkns: Token[] = []
-		const addSkipped = (t: Token) => {
-			for (const tkn of t.skipped) tkns.push(tkn)
-		}
+		const tkns: Token<T>[] = []
 		let t
-		while (!(t = this.next()).isEof()) {
-			addSkipped(t)
-			tkns.push(t)
-		}
-		addSkipped(t)
+		while (!(t = this.next()).isEof()) tkns.push(t)
+		tkns.push(t)
 
 		this.state = oldState
 		this.options.throwOnUnrecognized = shouldThrow
