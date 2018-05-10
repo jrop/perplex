@@ -56,6 +56,15 @@ export default class Lexer<T = string> {
 	//
 
 	/**
+	 * Builds and then returns a lexer (convenience method)
+	 * @param builder The callback that will build the lexer
+	 */
+	build(builder: (lexer: Lexer<T>) => any): Lexer<T> {
+		builder(this)
+		return this
+	}
+
+	/**
 	 * Utilize the `other` Lexer's underlying state as our own.
 	 * Allows two or more Lexers to attache to the same state
 	 * and both stream through tokens in a coordinated manner.

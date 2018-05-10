@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc && node readme.js",
-    "lint": "prettier -l 'src/**/*.ts'",
+    "lint": "prettier -l '{src,test}/**/*.ts'",
     "lint:fix": "prettier --write '{src,test}/**/*.ts'",
     "precommit": "npm run build && npm run lint && npm run test",
     "prepack": "npm run build && npm test",
