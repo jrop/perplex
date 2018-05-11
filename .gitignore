@@ -1,5 +1,6 @@
 .nyc_output/
 coverage/
+docs/
 node_modules/
 lib/
 npm-error.log

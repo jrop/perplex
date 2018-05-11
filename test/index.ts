@@ -17,13 +17,13 @@ function clean(t: Token) {
 	)
 }
 
-const lex = new Lexer().build(lex =>
-	lex.tokenTypes
-		.define('WS', /\s+/)
+const lex = new Lexer().build(define =>
+	define
+		.token('WS', /\s+/)
 		.disable('WS')
-		.define('NUMBER', /\d+/)
-		.define('SINGLE_LINE_COMMENT', /\/\/[^\n]*/, true)
-		.define('WHITESPACE', /^\s+/, true)
+		.token('NUMBER', /\d+/)
+		.token('SINGLE_LINE_COMMENT', /\/\/[^\n]*/, true)
+		.token('WHITESPACE', /^\s+/, true)
 )
 
 const test = (s, cb: _test.TestCase) =>
@@ -135,10 +135,8 @@ test('.rewind()', t => {
 
 test('.attach()', function(t) {
 	t.plan(1)
-	const lex2 = new Lexer().build(lex2 => {
-		lex2.tokenTypes.define('ALL', /.*/)
-		lex2.attachTo(lex)
-	})
+	const lex2 = new Lexer().build(define => define.token('ALL', /.*/))
+	lex2.attachTo(lex)
 
 	lex.next() // eat 4
 	t.deepLooseEqual(clean(lex2.peek()), {
@@ -202,20 +200,16 @@ test('.strpos()', function(t) {
 	})
 })
 
-test('.defineKeyword()', function(t) {
-	const lex = new Lexer().build(lex => {
-		lex.tokenTypes.defineKeyword('asdf', 'asdf')
-		lex.state.source = 'asdf('
-	})
+test('define.keyword()', function(t) {
+	const lex = new Lexer().build(define => define.keyword('asdf', 'asdf'))
+	lex.state.source = 'asdf('
 	t.equal(lex.next().type, 'asdf')
 	t.end()
 })
 
-test('.defineOperator()', function(t) {
-	const lex = new Lexer().build(lex => {
-		lex.tokenTypes.defineOperator('+', '+')
-		lex.state.source = '+('
-	})
+test('define.operator()', function(t) {
+	const lex = new Lexer().build(define => define.operator('+', '+'))
+	lex.state.source = '+('
 	t.equal(lex.next().type, '+')
 	t.end()
 })

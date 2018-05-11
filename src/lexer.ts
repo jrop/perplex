@@ -56,11 +56,11 @@ export default class Lexer<T = string> {
 	//
 
 	/**
-	 * Builds and then returns a lexer (convenience method)
+	 * Builds the lexer
 	 * @param builder The callback that will build the lexer
 	 */
-	build(builder: (lexer: Lexer<T>) => any): Lexer<T> {
-		builder(this)
+	build(builder: (define: LexerBuilder<T>) => any): this {
+		builder(new LexerBuilder<T>(this))
 		return this
 	}
 
@@ -193,6 +193,73 @@ export default class Lexer<T = string> {
 		this.state = oldState
 		this.options.throwOnUnrecognized = shouldThrow
 		return tkns
+	}
+}
+
+/**
+ * Builds a lexer
+ */
+export class LexerBuilder<T> {
+	/**
+	 * @hidden
+	 */
+	private _lexer: Lexer<T>
+	constructor(lexer: Lexer<T>) {
+		this._lexer = lexer
+	}
+
+	/**
+	 * Disables a specified token-type
+	 * @param type The token type to disable
+	 */
+	disable(type: T): this {
+		this._lexer.tokenTypes.enable(type, false)
+		return this
+	}
+	/**
+	 * Enables/disables a specified token-type
+	 * @param type The token type to enable/disable
+	 */
+	enable(type: T, enabled: boolean = true): this {
+		this._lexer.tokenTypes.enable(type, enabled)
+		return this
+	}
+
+	/**
+	 * Defines a keyword token
+	 * @param type The token type
+	 * @param kwd The keyword, as a string
+	 */
+	keyword(type: T, kwd: string): this {
+		this._lexer.tokenTypes.defineKeyword(type, kwd)
+		return this
+	}
+
+	/**
+	 * Defines a token
+	 * @param type The token type
+	 * @param pattern The pattern to match
+	 * @param skip Sets whether this is a skipped token or not
+	 * @param enabled Sets where this token is enabled or not
+	 */
+	token(
+		type: T,
+		pattern: RegExp | string,
+		skip: boolean = false,
+		enabled: boolean = true
+	): this {
+		this._lexer.tokenTypes.define(type, pattern, skip, enabled)
+		return this
+	}
+
+	/**
+	 * Defines an operator token
+	 * @param type The token type
+	 * @param kwd The operator, as a string
+	 */
+	operator(type: T, op: T): this {
+		this._lexer.tokenTypes.defineOperator(type, op)
+		return this
 	}
 }
 
