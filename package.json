@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && npm run docs",
-    "docs": "npm run docs:ts && npm run docs:book",
-    "docs:book": "gitbook build",
-    "docs:ts": "typedoc --out ./docs/api --mode file --excludePrivate ./src",
-    "gh-pages": "npm run docs && gh-pages -d _book",
+    "build": "tsc",
+    "docs": "npm run docs:ts && npm run docs:site",
+    "docs:site": "vuepress build docs",
+    "docs:ts": "typedoc --out docs/.vuepress/public/api --mode file --excludePrivate ./src",
+    "gh-pages": "npm run docs && gh-pages -d docs/.vuepress/dist/",
     "lint": "prettier -l '{src,test}/**/*.ts'",
     "lint:fix": "prettier --write '{src,test}/**/*.ts'",
     "precommit": "npm run build && npm run lint && npm run test",
@@ -28,7 +28,6 @@
     "@types/tape": "^4.2.30",
     "except": "^0.1.3",
     "gh-pages": "^1.1.0",
-    "gitbook-cli": "^2.3.2",
     "husky": "^0.14.3",
     "nyc": "^11.6.0",
     "prettier": "^1.10.2",
@@ -38,7 +37,8 @@
     "ts-node": "^3.2.1",
     "tslint": "^4.5.1",
     "typedoc": "^0.11.1",
-    "typescript": "^2.2.1"
+    "typescript": "^2.2.1",
+    "vuepress": "^0.8.4"
   },
   "repository": "https://github.com/jrop/perplex",
   "publishConfig": {
@@ -50,14 +50,8 @@
     ]
   },
   "files": [
-    "lib/lexer-state.d.ts",
-    "lib/lexer-state.js",
-    "lib/lexer.js",
-    "lib/lexer.d.ts",
-    "lib/token-types.d.ts",
-    "lib/token-types.js",
-    "lib/token.d.ts",
-    "lib/token.js",
+    "lib/*.d.ts",
+    "lib/*.js",
     "index.js",
     "index.d.ts"
   ]

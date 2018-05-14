@@ -1,3 +1,6 @@
+---
+title: Contributing
+---
 # Contributing
 
 All contributions are welcome.  A suggested order of operations is given:

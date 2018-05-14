@@ -1,3 +1,6 @@
+---
+title: Installation
+---
 # Installation
 
 Perplex is hosted on NPM:

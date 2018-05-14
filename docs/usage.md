@@ -1,8 +1,11 @@
+---
+title: Usage
+---
 # Usage
 
 Perplex is compiled and published as a CommonJS module.  However, all of the ES Module information is retained, so it can be imported as an ECMAScript module, or a TypeScript module.
 
-### CommonJS
+## CommonJS
 
 ```js
 const perplex = require('perplex')
@@ -15,21 +18,21 @@ const perplex = require('perplex')
 //      LexerBuilder: [Function: LexerBuilder] }
 ```
 
-### ECMAScript
+## ECMAScript
 
 ```js
 // Like above:
 import {Lexer /*, ... */} from 'perplex'
 ```
 
-### TypeScript
+## TypeScript
 
 ```js
 // Like above:
 import {Lexer /*, ... */} from 'perplex'
 ```
 
-### Initializing
+## Initializing
 
 A `Lexer` is initialized based on a source.  The source that a lexer can operate on can be one of:
 
@@ -39,7 +42,7 @@ A `Lexer` is initialized based on a source.  The source that a lexer can operate
 
 Whatever it is initialized with, the Lexer constructor will normalize the source to an instance of `LexerState`.  This way multiple lexers can operate on the same state, and all work in conjunction.  Imagine the following scenario where I want several types of lexers operating on the same input stream:
 
-```ts
+```js
 import {Lexer} from 'perplex'
 const source = '...my source string...'
 
@@ -52,7 +55,7 @@ const nlLexer = new Lexer(baseLexer)
 
 In this case, one lexer can handle newlines.  When it consumes a token, it will advance all lexers by the appropriate character count.
 
-### Defining Token Types
+## Defining Token Types
 
 Use the following methods:
 
@@ -60,7 +63,7 @@ Use the following methods:
 * `Lexer.keyword`
 * `Lexer.operator`
 
-```ts
+```js
 const lexer = new Lexer('...my source string...')
 	.token('ID', /([a-z_$]+[a-z0-9_$]*)/)
 	.keyword('T_WHILE', 'while')

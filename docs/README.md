@@ -1,3 +1,7 @@
+---
+home: false
+title: Introduction
+---
 # Introduction
 
 Perplex is an easy-to-use lexer written in TypeScript, powered by RegExp.  Perplex has the following features:
@@ -8,7 +12,7 @@ Perplex is an easy-to-use lexer written in TypeScript, powered by RegExp.  Perpl
 
 At its simplest, you can start using perplex in just a few lines:
 
-```ts
+```js
 import {Lexer} from 'perplex'
 
 const lexer = new Lexer('  4 5 6  ')

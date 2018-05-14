@@ -1,3 +1,6 @@
+---
+title: License
+---
 # License
 
 ISC License (ISC)

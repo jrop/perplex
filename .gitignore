@@ -1,7 +1,7 @@
-_book/
 .nyc_output/
+docs/.vuepress/dist/
+docs/.vuepress/public/api/
 coverage/
-docs/api/
 node_modules/
 lib/
 npm-error.log
