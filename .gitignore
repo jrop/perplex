@@ -1,6 +1,7 @@
+_book/
 .nyc_output/
 coverage/
-docs/
+docs/api/
 node_modules/
 lib/
 npm-error.log

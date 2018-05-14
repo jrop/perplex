@@ -102,11 +102,10 @@ export default class TokenTypes<T = string> {
 	}
 
 	defineKeyword(type: T, kwd: string) {
-		return this.define(type, new RegExp(`${kwd}(?=\\W|$)`))
+		return this.define(type, new RegExp(`\\b${kwd}(?=\\b)`))
 	}
 
-	defineOperator(type: T, op: T) {
-		const sOp = new String(op).valueOf()
-		return this.define(type, sOp)
+	defineOperator(type: T, op: string) {
+		return this.define(type, op)
 	}
 }

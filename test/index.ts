@@ -17,18 +17,16 @@ function clean(t: Token) {
 	)
 }
 
-const lex = new Lexer().build(define =>
-	define
-		.token('WS', /\s+/)
-		.disable('WS')
-		.token('NUMBER', /\d+/)
-		.token('SINGLE_LINE_COMMENT', /\/\/[^\n]*/, true)
-		.token('WHITESPACE', /^\s+/, true)
-)
+const lex = new Lexer()
+	.token('WS', /\s+/)
+	.disable('WS')
+	.token('NUMBER', /\d+/)
+	.token('SINGLE_LINE_COMMENT', /\/\/[^\n]*/, true)
+	.token('WHITESPACE', /^\s+/, true)
 
 const test = (s, cb: _test.TestCase) =>
 	_test(s, t => {
-		lex.state.source = '  4 5 6  '
+		lex.source = '  4 5 6  '
 		return cb(t)
 	})
 
@@ -57,19 +55,19 @@ const SIX = {
 test('.source (get)', function(t) {
 	t.plan(1)
 	lex.next() // 4
-	t.looseEqual(lex.state.source.replace(/\s+/g, ''), '456')
+	t.looseEqual(lex.source.replace(/\s+/g, ''), '456')
 })
 
 test('.position (get)', function(t) {
 	t.plan(1)
 	lex.next() // 4
-	t.looseEqual(lex.state.position, 3)
+	t.looseEqual(lex.position, 3)
 })
 
 test('.position (set)', function(t) {
 	t.plan(1)
 	lex.next() // 4
-	lex.state.position = 0
+	lex.position = 0
 	t.looseEqual(lex.next().match.trim(), '4')
 })
 
@@ -96,6 +94,15 @@ test('.next()', function(t) {
 		end: 9,
 	})
 	t.assert(lex.next().isEof())
+})
+
+test('.ifNext()', function(t) {
+	t.equal(lex.ifNext('NUMBER', t => t.match), '4')
+	t.equal(
+		lex.ifNext('INVALID_TOKEN_TYPE', t => t.match, () => 'UNMATCHED'),
+		'UNMATCHED'
+	)
+	t.end()
 })
 
 test('.expect()', function(t) {
@@ -135,7 +142,7 @@ test('.rewind()', t => {
 
 test('.attach()', function(t) {
 	t.plan(1)
-	const lex2 = new Lexer().build(define => define.token('ALL', /.*/))
+	const lex2 = new Lexer().token('ALL', /.*/)
 	lex2.attachTo(lex)
 
 	lex.next() // eat 4
@@ -152,17 +159,17 @@ test('enable/disable token types', function(t) {
 	t.plan(5)
 	t.equal(lex.tokenTypes.isEnabled('WS'), false)
 
-	lex.tokenTypes.enable('WS')
+	lex.enable('WS')
 	t.looseEqual(lex.next().match, '  ')
 	t.equal(lex.tokenTypes.isEnabled('WS'), true)
 	t.looseEqual(lex.next().match, '4')
 
-	lex.tokenTypes.disable('WS')
+	lex.disable('WS')
 	t.looseEqual(lex.next().match, '5')
 })
 
 test('unexpected input', function(t) {
-	lex.state.source = '4 asdf'
+	lex.source = '4 asdf'
 	t.looseEqual(lex.next().match, '4')
 	t.throws(() => lex.next(), /asdf/)
 	t.assert(lex.next().isEof())
@@ -171,7 +178,7 @@ test('unexpected input', function(t) {
 
 test('.strpos()', function(t) {
 	t.plan(4)
-	lex.state.source = `4
+	lex.source = `4
 5 6
 7`
 
@@ -201,15 +208,18 @@ test('.strpos()', function(t) {
 })
 
 test('define.keyword()', function(t) {
-	const lex = new Lexer().build(define => define.keyword('asdf', 'asdf'))
-	lex.state.source = 'asdf('
+	const lex = new Lexer().keyword('asdf', 'asdf')
+	lex.source = 'asdf('
 	t.equal(lex.next().type, 'asdf')
+
+	const lex2 = new Lexer('asdfjkl').keyword('asdf', 'asdf')
+	t.throws(() => lex.next(), /unexpected/i)
 	t.end()
 })
 
 test('define.operator()', function(t) {
-	const lex = new Lexer().build(define => define.operator('+', '+'))
-	lex.state.source = '+('
+	const lex = new Lexer().operator('+', '+')
+	lex.source = '+('
 	t.equal(lex.next().type, '+')
 	t.end()
 })
@@ -236,7 +246,7 @@ test('recording', t => {
 test('preservation', t => {
 	// test for recognized input
 	t.equal(
-		lex.state.source,
+		lex.source,
 		lex
 			.toArray()
 			.map(t => t.toString())
@@ -245,14 +255,14 @@ test('preservation', t => {
 	)
 
 	// test for unrecognized input
-	lex.state.source = '1 asdf'
+	lex.source = '1 asdf'
 	const tokens = lex.toArray()
 	const eof = tokens[1]
 	t.assert(eof.isEof())
 	t.equal(eof.skipped.length, 2)
 	t.assert(tokens[1].skipped[1].isUnrecognized(), 'contains unrecognized token')
 	t.equal(
-		lex.state.source,
+		lex.source,
 		tokens.map(t => t.toString()).join(''),
 		'preserves unrecognized'
 	)

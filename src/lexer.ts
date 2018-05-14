@@ -52,17 +52,24 @@ export default class Lexer<T = string> {
 	}
 
 	//
+	// PROPERTIES
+	//
+	get source() {
+		return this.state.source
+	}
+	set source(value: string) {
+		this.state.source = value
+	}
+	get position() {
+		return this.state.position
+	}
+	set position(i: number) {
+		this.state.position = i
+	}
+
+	//
 	// METHODS
 	//
-
-	/**
-	 * Builds the lexer
-	 * @param builder The callback that will build the lexer
-	 */
-	build(builder: (define: LexerBuilder<T>) => any): this {
-		builder(new LexerBuilder<T>(this))
-		return this
-	}
 
 	/**
 	 * Utilize the `other` Lexer's underlying state as our own.
@@ -89,6 +96,33 @@ export default class Lexer<T = string> {
 			)
 		}
 		return t
+	}
+
+	/**
+	 * Execute a function if the next token is of type `type`
+	 *
+	 * Example:
+	 * ```ts
+	 * const result = lexer.ifNext(
+	 *   'NUM',
+	 *   t => parseFloat(t.match),
+	 *   () => Number.NaN
+	 * )
+	 * ```
+	 *
+	 * @param type The type(s) of token to accept
+	 * @param consequent The function to execute upon a matching token
+	 * @param alternate An optional function to execute upon not matching
+	 * @returns The result of `consequent` or `alternate`
+	 */
+	ifNext<U, V>(
+		type: T | T[],
+		consequent: (token: Token<T>) => U,
+		alternate?: () => V
+	): U | V {
+		const types = Array.isArray(type) ? type : [type]
+		if (types.includes(this.peek().type)) return consequent(this.next())
+		else if (typeof alternate === 'function') return alternate()
 	}
 
 	/**
@@ -133,6 +167,13 @@ export default class Lexer<T = string> {
 		if (!this.options.record) return
 		for (const s of t.skipped) this.state.trail.push(s)
 		if (!t.isEof()) this.state.trail.push(t)
+	}
+
+	/**
+	 * Return the rest of the (unconsumed) string
+	 */
+	rest() {
+		return this.source.substr(this.position)
 	}
 
 	/**
@@ -194,26 +235,17 @@ export default class Lexer<T = string> {
 		this.options.throwOnUnrecognized = shouldThrow
 		return tkns
 	}
-}
 
-/**
- * Builds a lexer
- */
-export class LexerBuilder<T> {
-	/**
-	 * @hidden
-	 */
-	private _lexer: Lexer<T>
-	constructor(lexer: Lexer<T>) {
-		this._lexer = lexer
-	}
+	//
+	// BUILDER METHODS
+	//
 
 	/**
 	 * Disables a specified token-type
 	 * @param type The token type to disable
 	 */
 	disable(type: T): this {
-		this._lexer.tokenTypes.enable(type, false)
+		this.tokenTypes.enable(type, false)
 		return this
 	}
 	/**
@@ -221,7 +253,7 @@ export class LexerBuilder<T> {
 	 * @param type The token type to enable/disable
 	 */
 	enable(type: T, enabled: boolean = true): this {
-		this._lexer.tokenTypes.enable(type, enabled)
+		this.tokenTypes.enable(type, enabled)
 		return this
 	}
 
@@ -231,7 +263,7 @@ export class LexerBuilder<T> {
 	 * @param kwd The keyword, as a string
 	 */
 	keyword(type: T, kwd: string): this {
-		this._lexer.tokenTypes.defineKeyword(type, kwd)
+		this.tokenTypes.defineKeyword(type, kwd)
 		return this
 	}
 
@@ -248,7 +280,7 @@ export class LexerBuilder<T> {
 		skip: boolean = false,
 		enabled: boolean = true
 	): this {
-		this._lexer.tokenTypes.define(type, pattern, skip, enabled)
+		this.tokenTypes.define(type, pattern, skip, enabled)
 		return this
 	}
 
@@ -257,10 +289,10 @@ export class LexerBuilder<T> {
 	 * @param type The token type
 	 * @param kwd The operator, as a string
 	 */
-	operator(type: T, op: T): this {
-		this._lexer.tokenTypes.defineOperator(type, op)
+	operator(type: T, op: string): this {
+		this.tokenTypes.defineOperator(type, op)
 		return this
 	}
 }
 
-export {EOF, Token, TokenTypes, LexerState}
+export {EOF, Token, TokenTypes, Lexer, LexerState}
