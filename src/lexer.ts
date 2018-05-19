@@ -209,7 +209,9 @@ export default class Lexer<T = string> {
 	 */
 	throw(t: Token<T>) {
 		const {line, column} = this.strpos(t.start)
-		const e = new Error(`Unexpected input: ${t.match} at (${line}:${column})`)
+		const e = new Error(
+			`Unexpected input: ${JSON.stringify(t.match)} at (${line}:${column})`
+		)
 		;(e as any).token = t
 		throw e
 	}

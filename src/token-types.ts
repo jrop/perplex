@@ -32,12 +32,6 @@ export default class TokenTypes<T = string> {
 		enabled: boolean
 		skip: boolean
 	}[]
-	private UNMATCHED_TT = {
-		type: null,
-		regex: normalize(/(?:.|\s)*/),
-		enabled: true,
-		skip: true,
-	}
 
 	constructor(lexer: Lexer<T>) {
 		this.lexer = lexer
@@ -62,17 +56,22 @@ export default class TokenTypes<T = string> {
 		return ttypes[0].enabled
 	}
 
-	peek(source: string, position: number) {
-		const tts = [...this.tokenTypes, this.UNMATCHED_TT]
-		const match = first(tts.filter(tt => tt.enabled), tt => {
+	firstMatch(source: string, position: number) {
+		return first(this.tokenTypes.filter(tt => tt.enabled), tt => {
 			tt.regex.lastIndex = 0
 			return tt.regex.exec(source.substring(position))
 		})
-		return match.item == this.UNMATCHED_TT
-			? new UnrecognizedToken(
-					match.result[0],
+	}
+
+	peek(source: string, position: number) {
+		let i = position,
+			match = this.firstMatch(source, i)
+		while (!match && i < source.length) match = this.firstMatch(source, ++i)
+		return position != i
+			? new UnrecognizedToken<T>(
+					source.substring(position, i),
 					position,
-					position + match.result[0].length,
+					i,
 					null
 			  )
 			: new Token({

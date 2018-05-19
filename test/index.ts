@@ -169,10 +169,10 @@ test('enable/disable token types', function(t) {
 })
 
 test('unexpected input', function(t) {
-	lex.source = '4 asdf'
+	lex.source = '4 asdf 5'
 	t.looseEqual(lex.next().match, '4')
-	t.throws(() => lex.next(), /asdf/)
-	t.assert(lex.next().isEof())
+	t.throws(() => lex.next(), /unexpected input: "asdf"/i)
+	t.looseEqual(lex.next().match, '5')
 	t.end()
 })
 
@@ -213,7 +213,7 @@ test('define.keyword()', function(t) {
 	t.equal(lex.next().type, 'asdf')
 
 	const lex2 = new Lexer('asdfjkl').keyword('asdf', 'asdf')
-	t.throws(() => lex.next(), /unexpected/i)
+	t.throws(() => lex2.next(), /unexpected input: "asdfjkl"/i)
 	t.end()
 })
 
