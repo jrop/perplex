@@ -85,9 +85,10 @@ export default class Lexer<T = string> {
 	 * Throw if `.next().type != type`
 	 * @param type The type of token to expect
 	 */
-	expect(type: T): Token<T> {
+	expect(type: T | T[]): Token<T> {
+		const types = Array.isArray(type) ? type : [type]
 		const t = this.next()
-		if (t.type != type) {
+		if (!types.includes(t.type)) {
 			const pos = t.strpos()
 			throw new Error(
 				`Expected ${type}, got ${t.type} at ${pos.start.line}:${
