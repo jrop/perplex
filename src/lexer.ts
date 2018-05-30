@@ -126,12 +126,9 @@ export default class Lexer<T = string> {
 		else if (typeof alternate === 'function') return alternate()
 	}
 
-	/**
-	 * Retrieve the next token, and advance the current position
-	 */
-	next(): Token<T> {
+	private _next(t?: Token<T>): Token<T> {
 		try {
-			const t = this.peek()
+			t = t || this.peek()
 			this.state.position = t.end
 			this.record(t)
 			return t
@@ -141,6 +138,13 @@ export default class Lexer<T = string> {
 			this.state.position = t.end
 			throw e
 		}
+	}
+
+	/**
+	 * Retrieve the next token, and advance the current position
+	 */
+	next(): Token<T> {
+		return this._next()
 	}
 
 	/**
@@ -237,6 +241,27 @@ export default class Lexer<T = string> {
 		this.state = oldState
 		this.options.throwOnUnrecognized = shouldThrow
 		return tkns
+	}
+
+	/**
+	 * Eats tokens until a token of any of the specified tokens is encounterd.
+	 * @param types The type(s) of tokens to search until
+	 * @param inclusive Whether to eat the specified boundary token
+	 * @returns The eaten tokens. This will never include the EOF token
+	 */
+	until(types: T[], inclusive = false): Token<T>[] {
+		const eaten: Token<T>[] = []
+		let t: Token<T>
+		while (!types.includes((t = this.peek()).type) && !t.isEof()) {
+			console.log(t.type)
+			eaten.push(t)
+			this._next(t)
+		}
+		if (inclusive && !t.isEof()) {
+			eaten.push(t)
+			this._next(t)
+		}
+		return eaten
 	}
 
 	//

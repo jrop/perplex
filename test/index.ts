@@ -21,6 +21,7 @@ const lex = new Lexer()
 	.token('WS', /\s+/)
 	.disable('WS')
 	.token('NUMBER', /\d+/)
+	.operator('$', '$')
 	.token('SINGLE_LINE_COMMENT', /\/\/[^\n]*/, true)
 	.token('WHITESPACE', /^\s+/, true)
 
@@ -122,6 +123,24 @@ test('.toArray()', function(t) {
 	])
 	// make sure the original state is left intact:
 	t.deepLooseEqual(clean(lex.peek()), FIVE)
+})
+
+test('.until()', function(t) {
+	let eaten = lex.until(['NUMBER'])
+	t.equal(eaten.length, 0)
+
+	eaten = lex.until(['NUMBER'], true)
+	t.deepLooseEqual(eaten.map(t => clean(t)), [FOUR])
+
+	lex.source = '4 $ 5 6'
+	eaten = lex.until(['$'])
+	t.deepLooseEqual(eaten.map(t => t.match), ['4'])
+
+	lex.position = 0
+	eaten = lex.until(['$'], true)
+	t.deepLooseEqual(eaten.map(t => t.match), ['4', '$'])
+
+	t.end()
 })
 
 test('.rewind()', t => {
