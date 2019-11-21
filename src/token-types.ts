@@ -56,10 +56,13 @@ export default class TokenTypes<T> {
 
 	peek(source: string, position: number) {
 		const s = source.substr(position)
-		return first(this.tokenTypes.filter(tt => tt.enabled), tt => {
-			tt.regex.lastIndex = 0
-			return tt.regex.exec(s)
-		})
+		return first(
+			this.tokenTypes.filter(tt => tt.enabled),
+			tt => {
+				tt.regex.lastIndex = 0
+				return tt.regex.exec(s)
+			}
+		)
 	}
 
 	token(
