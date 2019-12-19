@@ -24,8 +24,10 @@ import TokenTypes from './token-types'
  * }
  * // alternatively:
  * console.log(lex.toArray())
+ * // or:
+ * console.log(...lex)
  */
-class Lexer<T> {
+class Lexer<T> implements Iterable<Token<T>> {
 	/* tslint:disable:variable-name */
 	private _state: LexerState<T>
 	private _tokenTypes: TokenTypes<T>
@@ -178,7 +180,7 @@ class Lexer<T> {
 							i,
 							i + n.result[0].length,
 							this
-						)
+					  )
 				: null
 		}
 		const t = read()
@@ -224,18 +226,25 @@ class Lexer<T> {
 	 * @return {Token<T>[]} The array of tokens (not including (EOF))
 	 */
 	toArray(): Token<T>[] {
+		return [...this]
+	}
+
+	/**
+	 * Implements the Iterable protocol
+	 * Iterates lazily over the entire token stream (not including (EOF))
+	 * @return {Iterator<Token<T>>} Returns an iterator over all remaining tokens
+	 */
+	*[Symbol.iterator]() {
 		const oldState = this._state.copy()
 		this._state.position = 0
 
-		const tkns: Token<T>[] = []
 		let t
 		while (
 			!(t = this.next()).isEof() // tslint:disable-line no-conditional-assignment
 		)
-			tkns.push(t)
+			yield t
 
 		this._state = oldState
-		return tkns
 	}
 
 	/**

@@ -9,6 +9,7 @@
     "lint:fix": "prettier --write 'src/**/*.ts'",
     "precommit": "npm run lint && npm run test",
     "prepack": "tsc && npm test",
+    "build": "tsc",
     "test": "tape -r 'ts-node/register' test/index.ts"
   },
   "keywords": [],
@@ -24,7 +25,7 @@
     "tape": "^4.7.0",
     "ts-node": "^3.2.1",
     "tslint": "^4.5.1",
-    "typescript": "^2.2.1"
+    "typescript": "^3.7.2"
   },
   "repository": "https://github.com/jrop/perplex",
   "publishConfig": {

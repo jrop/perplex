@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "lib": ["es2017"],
+    "downlevelIteration": true,
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es5",
